@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# for Ubuntu, obvs 
+
+FLAGS=""
+space=""
+
+for version in karmic lucid maverick natty oneiric precise quantal raring saucy trusty utopic vivid wily
+do
+	FLAGS=${FLAGS}${space}ubuntu-wallpapers-${version}
+	space=" "
+done
+
+apt-get install -y $FLAGS
