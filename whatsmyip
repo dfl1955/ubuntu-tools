@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Author Dave Levy	Date 30 Aug 2016 	Version 1.1
+
+# obtains the ip address of a given ethernet device, via menu or from the cli
+# the ip address is echoed via stdout getmyip -h reports the arguments
+
+# -h help, -m menu, -d a debug mode enhanced diagnostics  or -b which allows hte naming
+#	of the device. 
+
+# Currently the portname is overridden by an assignment statement.
+
+# why not use ip -4 or my showsysip script
+
+
+ERROR="Error in command line arguments"
+USAGE="$(basename $0) [ -h | -m | -d | -b device ]"
+
+debug=false
+debugecho()
+{
+	[ $debug ] && echo $*
+}
+
+
+while getopts "hmdb:" arg
+do
+case $arg in
+m)	devices=$(ifconfig -a -s | cut -f1 -d" ")
+	set DEVICES
+
+	for i in $devices
+	do
+		if [[ $i == "Iface" ]];then
+			:
+		else
+			DEVICES="${DEVICES} ${i}"
+		fi
+	done
+
+	echo "Select the Device Name for which IP is to be stored"
+	select PORTNAME in $DEVICES
+	do
+		break
+	done
+	echo $PORTNAME set in menu mode
+	;;
+b)	PORTNAME=${OPTARG}
+	# it would be good to test that $PORTNAME actuall named an valid device
+	debugecho $PORTNAME set in batch mode reported by debug echo
+	;;
+d)	debug=true
+	debugecho debug set to $debug, reported by debugecho
+	;;
+h)	echo ${USAGE}
+	exit 
+	;;
+help)	echo ${USAGE}
+	exit 
+	;;
+*)	echo ${ERROR}; exit 1
+	;;
+esac
+done
+
+
+PORTNAME=enp0s8
+debugecho Portname rest to $PORTNAME by default code path
+
+# this could be parameterised a -o flag
+
+PERSISTANCE="${HOME}/.myip"
+
+ifconfig $PORTNAME | grep "inet addr" | cut -f2 -d":" | cut -f1 -d" " > ${PERSISTANCE}
+cat ${PERSISTANCE}

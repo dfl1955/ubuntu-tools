@@ -1,0 +1,49 @@
+#!/bin/bash
+
+VER=16.04
+VNAME=xenial
+
+# an install routine to create the directories and self discover
+
+# possible an install switch with root=filesystem sub switch and then create
+# the ../bin and ../var/what's new directory, maybe an etc to hold the WORKDIR 
+# variable, maybe the locate program could be used to determine the root.
+
+ROOTDIR=/opt/local
+WORKDIR=${ROOTDIR}/var/whatsnew
+
+remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
+fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
+
+remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
+
+oninstall=${WORKDIR}/oninstall.1word
+foundpkgs=${WORKDIR}/found.1word
+afterthought=${WORKDIR}/afterthought.lis
+
+if [ ! -z $1 ]; then
+	if [ $1 == "clean" ];then
+		rm ${remotemanifest} ${oninstall} ${foundpkgs} \
+			${afterthought}
+		exit
+	fi
+fi
+	
+
+# main process path
+
+curl -o ${remotemanifest} -O $fullremotename 2>/dev/null
+# if [ $? != 0 ];then etc
+cut -f1 ${remotemanifest} | sort > ${oninstall}
+
+dpkg --get-selections | awk '$2 ~ /^(install|hold)/ { print $1 }' | sort > ${foundpkgs} 
+
+comm -23 ${foundpkgs} ${oninstall} > ${afterthought}
+
+# a verbose switch to display the after thoughts  file
+
+lines=$( wc -l ${afterthought} | awk '{ print $1 }')
+echo There are $lines  lines in the "afterthoughts" file
+
+
+
