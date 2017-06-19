@@ -18,6 +18,7 @@ done
 alias dosh="sudo docker"
 alias dsh="sudo docker"
 
+EDEV=eth0 ; EDEV=enp0s3
 if [ -z $SYS_IP ];then
-	export SYS_IP=$( ip -4 address show eth0 | grep 'inet' | sed 's/.*inet \([0-9\.]\+\).*/\1/')
+	export SYS_IP=$( ip -4 address show ${EDEV} | grep 'inet' | sed 's/.*inet \([0-9\.]\+\).*/\1/')
 fi
