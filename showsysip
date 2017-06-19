@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# A one line pirec of code to set and display the IP address of the system
+# it uses the ip call.
+
+if [ -z $SYS_IP ];then
+	export SYS_IP=$( ip -4 address show eth0 | grep 'inet' | sed 's/.*inet \([0-9\.]\+\).*/\1/')
+fi
+echo $SYS_IP

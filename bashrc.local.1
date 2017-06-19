@@ -1,0 +1,23 @@
+
+contains()
+{
+# $1 must be set & grep must be in the PATH
+	echo $1 | grep $2 > /dev/null
+	code=$?
+	return $code
+}
+
+# this is a customised space delimited list
+LOCAL_DIRS="${HOME}/bin"
+
+for directory in ${LOCAL_DIRS};do
+	contains $PATH $directory
+	[ $? != 0 ] && PATH=$directory:$PATH
+done
+
+alias dosh="sudo docker"
+alias dsh="sudo docker"
+
+if [ -z $SYS_IP ];then
+	export SYS_IP=$( ip -4 address show eth0 | grep 'inet' | sed 's/.*inet \([0-9\.]\+\).*/\1/')
+fi
