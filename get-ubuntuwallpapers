@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# for Ubuntu, obvs 
+# for Ubuntu, obvs, naybe apt-get intsall -y ubuntu-wallpapers* is better 
 
 FLAGS=""
 space=""
@@ -8,6 +8,7 @@ space=""
 for version in karmic lucid maverick natty oneiric precise quantal raring saucy trusty utopic vivid wily
 do
 	FLAGS=${FLAGS}${space}ubuntu-wallpapers-${version}
+	# this is wrong
 	space=" "
 done
 
