@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# run as root
+
+LINE=$(egrep "^PasswordAuthentication" /etc/ssh/sshd_config | cut -f2 -d" ")
+
+echo Password Authentication is set to $LINE
+echo It needs to be yes
+
+PS3='Do you wish to edit the config file? '
+options=("Yes" "No" "Quit")
+select opt in "${options[@]}"
+do
+    case $opt in
+        "Yes")
+            echo "you chose Yes"
+	    vi /etc/ssh/sshd_config
+#	    service ssh restart
+	    break
+            ;;
+        "No")
+            echo "you chose No"
+	    break
+            ;;
+        "Quit")
+            break
+            ;;
+        *) echo invalid option;;
+    esac
+done
+
+exit
+
+cd
+apt-get update
+apt-get install -y ubuntu-desktop
+apt-get install -y xfce4 
+apt-get install -y xfcd4-goodies
+apt-get install -y vnc4server
+apt-get install -y xrdp
+
+echo xfce4-session > ~/.xsession
+
+echo In \[xrdp1\] section of the xrdp.ini file the port parameter must be set to ask-1
+
+PS3='Do you wish to edit the config file? '
+options=("Yes" "No" "Quit")
+select opt in "${options[@]}"
+do
+    case $opt in
+        "Yes")
+            echo "you chose Yes"
+	    vi /etc/xrdp/xrdp.ini
+	    service xrdp restart
+	    break
+            ;;
+        "No")
+            echo "you chose No"
+	    break
+            ;;
+        "Quit")
+            break
+            ;;
+        *) echo invalid option;;
+    esac
+done
