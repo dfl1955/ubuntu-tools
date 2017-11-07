@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# test getopts & associative arrays (for liquid feedback)
+
 USAGE="$( basename $0 ) [ -p packagenane -v version ] | -h "
 
 declare -a package
