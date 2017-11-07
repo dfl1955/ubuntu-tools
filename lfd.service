@@ -1,0 +1,11 @@
+[Unit]
+Description=Liquid Feedback Update Deamon control
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/liquid_feedback_core
+ExecStart=/opt/liquid_feedback_core/lf_updated
+
+[Install]
+WantedBy=multi-user.target

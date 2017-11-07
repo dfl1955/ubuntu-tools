@@ -1,0 +1,36 @@
+#!/bin/bash
+
+USAGE="$( basename $0 ) [ -p packagenane -v version ] | -h "
+
+declare -a package
+package[0]=webmcp
+package[1]=moonbridge
+package[2]=pgLatLon
+
+declare -A version
+version[webmcp]=v2.1.0
+version[moonbridge]=v1.0.1
+version[pgLatLon]=v0.10
+
+VER=1  # false
+
+#liquid feed back directory structures are differnt 
+
+while getopts p:h opt
+do
+case $opt in
+-p|p)	for j in 0 1 2;do
+	if [ $OPTARG == ${package[$j]} ];then
+		VER=${version[${package[$j]}]}
+		PACKAGE=$OPTARG
+	fi
+	done
+	if [ $VER == 1 ];then
+		exit 1
+	fi
+	;;
+-h|h) echo $USAGE ; ;;
+esac
+done
+echo ${PACKAGE}=${VER}
+

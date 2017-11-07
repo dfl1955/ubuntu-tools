@@ -1,7 +1,7 @@
 #!/bin/bash
 
-VER=16.04
-VNAME=xenial
+VNAME=$( cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq )
+VER=$( cat /etc/*release | grep RELEASE | cut -f2 -d'=' | uniq )
 
 # an install routine to create the directories and self discover
 
@@ -9,8 +9,28 @@ VNAME=xenial
 # the ../bin and ../var/what's new directory, maybe an etc to hold the WORKDIR 
 # variable, maybe the locate program could be used to determine the root.
 
+# this program requires curl, I could use apt-cache policy to make the check,
+# but I chose to use 'which'.
+
+VERROR=0
+#apt-cache policy curl should be usable to make check
+
+if [ $( which curl | wc -l ) -eq 0 ];then
+	echo curl is not installed, please install it
+	VERROR=1
+fi
+
 ROOTDIR=/opt/local
 WORKDIR=${ROOTDIR}/var/whatsnew
+
+if [ ! -d ${WORKDIR} ];then
+	echo There is no ${WORKDIR} on this system, please make it
+	VERROR=1
+fi
+
+if [ ${VERROR} -eq 1 ];then
+	exit ${VERROR}
+fi
 
 remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
 fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
@@ -47,3 +67,4 @@ echo There are $lines  lines in the "afterthoughts" file
 
 
 
+cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq 

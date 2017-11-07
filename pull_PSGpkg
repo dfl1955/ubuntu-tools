@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# this scrip pulls software from the Public Software Group archive
+# it is designed to work with the liquid feedback installer
+
+
+USAGE="$( basename $0 ) [ -p packagenane -t targetdirectory ] | -h "
+SOURCE_SERVER=http://www.public-software-group.org/pub/projects/
+
+pullpkg()
+{
+
+# S0 Package Version Source Target
+
+cd $4
+wget ${3}/${1}/${2}/${1}-${2}.tar.gz && tar xzvf ${1}-${2}.tar.gz
+
+}
+
+USAGE="$( basename $0 ) [ -p packagenane -v version ] | -h "
+
+declare -a package
+package[0]=webmcp
+package[1]=moonbridge
+package[2]=pgLatLon
+
+declare -A version
+version[webmcp]=v2.1.0
+version[moonbridge]=v1.0.1
+version[pgLatLon]=v0.10
+
+VER=1  # false
+
+#liquid feed back directory structures are differnt 
+
+while getopts p:t:h opt
+do
+case $opt in
+-p|p)	for j in 0 1 2;do
+	if [ $OPTARG == ${package[$j]} ];then
+		VER=${version[${package[$j]}]}
+		PACKAGE=$OPTARG
+		PKG=$OPTARG
+	fi
+	done
+	if [ $VER == 1 ];then
+		exit 1
+	fi
+	;;
+-t|t)   TARGET_DIR=${OPTARG}
+	if [ ! -d ${TARGET_DIR} ];then
+		echo $TARGET_DIR does not exist
+		exit 1
+	fi
+	;;
+-h|h) 	echo $USAGE
+	;;
+esac
+done
+echo ${PACKAGE}=${VER}
+
+
+# do the work
+#
+pullpkg $PKG $VER $SOURCE_SERVER $TARGET_DIR
+

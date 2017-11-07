@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# This is a script to install liquid feedback. It is unfinished and untested.
+
+# run as root
+
+#apt-get -y  install build-essential lua5.2 liblua5.2-dev postgresql libpq-dev pmake imagemagick exim4 postgresql-server-dev-all postgresql-server-dev-9.5
+
+#apt-get -y install python-pip 
+#pip install --upgrade pip
+#pip install markdown2
+
+WWW_USER=www-data
+SHELL=/bin/bash
+
+su postgres -s ${SHELL} << EOF
+createuser --no-superuser --createdb --nocreaterole ${WWW_USER};
+EOF
+
+# Get the packages
+
+SOURCE_DIR=downloads
+LF_PKG=liquid_feedback_core
+LF_VER=v.4.0.0
+LL_PKG=pgLatLon
+LL_VER=v0.10
+
+SOURCE_SERVER=http://www.public-software-group.org/pub/projects/
+
+mkdir /opt/${LF_PKG}
+mkdir /opt/${SOURCE_DIR}
+cd /opt/${SOURCE_DIR}
+
+wget http://www.public-software-group.org/pub/projects/liquid_feedback/backend/${LF_VER}/${LF_PKG}-${LF_VER}.tar.gz && tar xzvf ${LF_PKG}-${LF_VER}.tar.gz
+
+wget http://www.public-software-group.org/pub/projects/liquid_feedback/backend/${LL_VER}/${LL_PKG}-${LL_VER}.tar.gz && tar xzvf ${LL_PKG}-${LL_VER}.tar.gz
+
+#wget http://www.public-software-group.org/pub/projects/liquid_feedback/backend/v4.0.0/liquid_feedback_core-v4.0.0.tar.gz && tar xzvf liquid_feedback_core-v4.0.0.tar.gz
+
+#wget http://www.public-software-group.org/pub/projects/pgLatLon/v0.10/pgLatLon-v0.10.tar.gz && tar xvzf pgLatLon-v0.10.tar.gz
+
+# make & install the packages
+
+cd pgLatLon-v0.10 ; make install
+cd ${LL_PKG}-${LL_VER}; make install
+cd /opt/${SOURCE_DIR}
+
+cd ${LL_PKG}-${LL_VER}; make 
+cp core.sql lf_update lf_update_issue_order lf_update_suggestion_order /opt/${LF_PKG}/
+cd /opt/${SOURCE_DIR}
+
+# make the database
+
+DB_NAME=liquid_feedback
+DB_OWNER=www-data
+
+# make the user
+
+# need superuser to install long lat extn
+
+su - postgres -s /bin/bash << EOF
+createuser --superuser --createdb --no-createrole www-data
+EOF
+
+su - ${DB_OWNER} -s ${SHELL} << EOF
+createdb ${DB_NAME}
+psql -v ON_ERROR_STOP=1 /opt/${LF_PKG}/core.sql -d ${DB_NAME} -U ${DB_OWNER}
+# need to run the config SQL & turn of the superuser function
+EOF
+
+# moonbridge
+
+apt-get -y install lua5.3 libbsd-dev
+
+MB_PKG=moonbridge
+MB_VER=v1.0.1
+
+cd /opt/${SOURCE_DIR}
+
+wget ${SOURCE_SERVER}/${PKG}/${VER}/${PKG}-${VER}.tar.gz && tar xzvf ${PKG}-${VER}.tar.gz
+#cd ${MB_PKG}-${MB_VER}
+pmake MOONBR_LOA_PATH=/opt/${PKG}/?.lua
+
+mkdir /opt/${PKG/
+cp moonbridge moonbridge_http.lua /opt/${PKG}
+
+# webmcp
+
+pullPSG -p webmcp -t /opt/${SOURCEDIR}/
+cd /opt/$SOURCEDIR/webmcp*
+sed /CFLAGS =/ s/$/ -I /usr/include/lua5.2/ Makefile.options
