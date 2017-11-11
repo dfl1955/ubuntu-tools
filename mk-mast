@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# must run as root
+
+# apt-get update && apt-get -y upgrade
+
+# apt-get -y install curl
+
+# curl -sL https://deb.nodesource.com/setup_6.x | bash -
+
+# apt-get -y install imagemagick ffmpeg libpq-dev libxml2-dev libxslt1-dev nodejs
+
+#npm install -g yarn
+
+#apt-get -y install redis-server redis-tools
+#apt-get -y install postgresql postgresql-contrib
+
+
+# su - postgres -c "createuser --echo --createdb mastodon"
+
+# sed -i '/^local.*postgres.*peer$/a host all     all     127.0.0.1/32    ident'  /etc/postgresql/9.?/main/pg_hba.conf
+if [ $? = 0 ];then
+	echo OK
+fi
+
+echo Installng pidentd
+#apt-get -y install pidentd
+echo Installing pidentd as a service
+#systemctl enable pidentd
+#systemctl start pidentd
+echo -n Restarting Postgres ...
+#systemctl restart postgresql
+echo " done"
+
+# apt-get -y install autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm3 libgdbm-dev
+
+#adduser --gecos --disabled-password --disabled-login mastodon
+
+export MHOME=/home/mastodon
+
+#su - mastodon << EOF
+#set -x
+#git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+#echo 'export PATH="$MHOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+#echo 'eval "\$(rbenv init -)"' >> ~/.bashrc
+#source ~/.bashrc
+#EOF
+
+su - mastodon << EOF
+echo 'export PATH="$MHOME/.rbenv/bin:$PATH"' >> ~/.profile
+echo 'eval "\$(rbenv init -)"' >> ~/.profile
+source ~/.profile
+EOF
+
+export RUBY_VERSION=2.4.2
+
+su - mastodon -s /bin/bash << EOF
+#git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+#rbenv install ${RUBY_VERSION}
+#rbenv global ${RUBY_VERSION}
+ruby -v
+EOF
+
+su - mastodon << EOF
+#cd ~
+#git clone https://github.com/tootsuite/mastodon.git live
+#cd live
+#git checkout $(git tag | tail -n 1)
+EOF
+
+su - mastodon << EOF
+cd live
+#echo "gem: --no-document" > ~/.gemrc
+#gem install bundler --no-ri
+bundle install --deployment --without development test
+yarn install
+EOF
+

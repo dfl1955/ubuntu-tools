@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -x
+
+# su - postgres -c "createuser --echo --createdb mastodon"
+
+sed -i '/^local.*postgres.*peer$/a host all     all     127.0.0.1/32    ident'  /etc/postgresql/9.?/main/pg_hba.conf
+if [ $? = 0 ];then
+	echo OK
+fi
