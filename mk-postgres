@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Dave's intsll postgress code
+
+# must run as root
+
+# apt-get update && apt-get -y upgrade
+
+USAGE="$0 [ -i | -u username | -h ]"
+
+install_sw()
+{
+apt-get -y install postgresql postgresql-contrib
+
+echo -n "Installing pidentd ... "
+
+sed -i '/^local.*postgres.*peer$/a host all     all     127.0.0.1/32    ident'  /etc/postgresql/9.?/main/pg_hba.conf
+if [ $? = 0 ];then
+	echo OK
+fi
+
+echo Installng pidentd
+apt-get -y install pidentd
+echo Installing pidentd as a service
+systemctl enable pidentd
+systemctl start pidentd
+echo " done"
+
+echo -n Restarting Postgres ...
+systemctl restart postgresql
+echo " done"
+}
+
+
+# test getopts & associative arrays (for liquid feedback)
+
+
+while getopts iu:h opt
+do
+case $opt in
+-i|i)	# needs test that no intalled
+	if [ $( which psql | wc -l ) -eq 0 ];then
+		install_sw 
+	else
+		echo postgres already installed
+		exit 1
+	fi
+	;;
+-u|u)	echo user name is $OPTARG
+	echo not yet done
+	;;	
+-h|h) 	echo $USAGE 
+	;;
+esac
+done
+
