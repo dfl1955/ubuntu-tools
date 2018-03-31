@@ -2,6 +2,11 @@
 
 VNAME=$( cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq )
 VER=$( cat /etc/*release | grep RELEASE | cut -f2 -d'=' | uniq )
+pname=$0
+
+echo $pname $VNAME $VER
+
+usage="$0 [ -v ]"
 
 # an install routine to create the directories and self discover
 
@@ -9,10 +14,23 @@ VER=$( cat /etc/*release | grep RELEASE | cut -f2 -d'=' | uniq )
 # the ../bin and ../var/what's new directory, maybe an etc to hold the WORKDIR 
 # variable, maybe the locate program could be used to determine the root.
 
+# the workdir will be made, this is best run as root
+
 # this program requires curl, I could use apt-cache policy to make the check,
 # but I chose to use 'which'.
 
+# whoami, if not root, shell = sudo
+
 VERROR=0
+
+if [ -z $1 ];then
+	verbose=false
+elif [ $1 == '-v' ];then
+	verbose=true
+else
+	verbose=false
+fi
+
 #apt-cache policy curl should be usable to make check
 
 if [ $( which curl | wc -l ) -eq 0 ];then
@@ -23,14 +41,23 @@ fi
 ROOTDIR=/opt/local
 WORKDIR=${ROOTDIR}/var/whatsnew
 
+mkwd()
+{
+	sudo mkdir -p  $1
+	chmod -R 777 ${ROOTDIR}
+}
+
 if [ ! -d ${WORKDIR} ];then
-	echo There is no ${WORKDIR} on this system, please make it
+	echo There is no ${WORKDIR} on this system, I\'ll make you one.
+	# we could make it ourself
+	mkwd ${WORKDIR}
 	VERROR=1
 fi
 
 if [ ${VERROR} -eq 1 ];then
 	exit ${VERROR}
 fi
+
 
 remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
 fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
@@ -65,6 +92,10 @@ comm -23 ${foundpkgs} ${oninstall} > ${afterthought}
 lines=$( wc -l ${afterthought} | awk '{ print $1 }')
 echo There are $lines  lines in the "afterthoughts" file
 
+if [ $verbose == true ];then
+	cat ${afterthought}
+else
+	echo The afterthoughts file is called ${afterthought}
+fi
 
-
-cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq 
+# cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq 
