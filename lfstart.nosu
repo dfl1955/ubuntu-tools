@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# this script starts moonbridge & liquid feedback
-
-/opt/moonbridge/moonbridge /opt/webmcp/bin/mcp.lua /opt/mcp /opt/liquid_feedback_frontend/ main myconfig
