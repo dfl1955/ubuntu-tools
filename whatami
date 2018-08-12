@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# echos the os codename and version
+
+lfiles ()
+{
+for i in $(ls /etc/*release)
+do
+	if [ -f ${i} ];then
+		cat ${i}; fi
+done
+}
+
+VOS=$( lfiles | grep DISTRIB_ID | cut -f2 -d'=' | cut -f2 -d'"' | uniq )
+VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
+VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
+pname=$0
+
+echo  $VOS $VNAME $VER
+

@@ -1,10 +1,25 @@
 #!/bin/bash
 
-VNAME=$( cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq )
-VER=$( cat /etc/*release | grep RELEASE | cut -f2 -d'=' | uniq )
+
+lfiles ()
+{
+for i in $(ls /etc/*release)
+do
+	if [ -f ${i} ];then
+		cat $i
+	fi
+done
+}
+
+# VNAME=$( cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq )
+VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
+# this now includes a directory on elementary
+#VER=$( cat /etc/*release | grep RELEASE | cut -f2 -d'=' | uniq )
+VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
 pname=$0
 
 echo $pname $VNAME $VER
+
 
 usage="$0 [ -v ]"
 
