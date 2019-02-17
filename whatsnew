@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This has nt yet been tested.
+
 #=====================================================================
 
 # This program compares the installed packages with a manifest and 
