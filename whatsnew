@@ -1,5 +1,17 @@
 #!/bin/bash
 
+#=====================================================================
+
+# This program compares the installed packages with a manifest and 
+# produces a list of the newly installed packages i.e. those that I
+# have installed.
+
+# It declares functions, analyses the switches. checks that it has
+# the privileges and resources it requires and then performs its work
+
+#=====================================================================
+#
+# functions
 
 lfiles ()
 {
@@ -11,56 +23,103 @@ do
 done
 }
 
+mkwd()
+{
+	# this sudo needs to be re-factored
+	sudo mkdir -p  $1
+	chmod -R 777 ${ROOTDIR}
+}
+
+# set's the results directory
+
+ROOTDIR=/opt/local
+WORKDIR=${ROOTDIR}/var/whatsnew
+
+case $( [[ -d ${WORKDIR} ]]) in
+true)	resultsdir=true; ;;
+false)	resultsdir=false; ;;
+esac
+
+oninstall=${WORKDIR}/oninstall.1word
+foundpkgs=${WORKDIR}/found.1word
+afterthought=${WORKDIR}/afterthought.lis
+
+case `whoami` in
+root) 	superuser=true; ;;
+*)	superuser=false; ;;
+esac
+
+
+wos()
+{
+cat /etc/*release | grep ^PRETTY | cut -f2 -d'=' | tr -d '"' | cut -f1 -d" "
+}
+
+
+# this program requires curl, I could use apt-cache policy to make the check,
+# but I chose to use 'which'.
+
+if [ $( which curl | wc -l ) -eq 0 ];then
+	echo curl is not installed, please install it
+	exit 3
+fi
+
+# also needs dpkg & cut
+
+#=====================================================================
+
+pname=$0
+usage="$0 [ -v ]"
+verbose=false
+
+# I need a install, verbose, clean, help and show switch
+
+while getopts ivsh opt
+do
+case $opt in
+-i|i)	# this is the install leg
+	# needs to be root
+	echo $pname $VNAME $VER ... in install results directory
+	: ; ;;
+-h|h) 	echo $usage; exit
+	;;
+-v|v) 	# this is the verbose leg
+	verbose=true
+	echo $pname $VNAME $VER ... in verbose mode
+	; ;;
+-c|c)	# this is the clean files leg
+	cleanresults=true
+	rm ${remotemanifest} ${oninstall} ${foundpkgs}  ${afterthought}
+	exit
+	;;
+-s|s)	# this is the show leg
+	echo $pname $VNAME $VER ... show results
+	; ;;
+*)	echo $usgae
+	exit 1
+	;;
+esac
+done
+
+# needs some code to test cross validation of switches 
+# i.e. not s && i
+
+#=====================================================================
+#
+# This code assume ubuntu or more accuralty is known not to work with
+# on the raspberry pi. It is used to derive the manifest file location
+
 # VNAME=$( cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq )
 VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
 # this now includes a directory on elementary
 #VER=$( cat /etc/*release | grep RELEASE | cut -f2 -d'=' | uniq )
 VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
-pname=$0
 
-echo $pname $VNAME $VER
+#=====================================================================
 
-
-usage="$0 [ -v ]"
-
-# an install routine to create the directories and self discover
-
-# possible an install switch with root=filesystem sub switch and then create
-# the ../bin and ../var/what's new directory, maybe an etc to hold the WORKDIR 
-# variable, maybe the locate program could be used to determine the root.
-
-# the workdir will be made, this is best run as root
-
-# this program requires curl, I could use apt-cache policy to make the check,
-# but I chose to use 'which'.
-
-# whoami, if not root, shell = sudo
+# a couple more tests, are they needed
 
 VERROR=0
-
-if [ -z $1 ];then
-	verbose=false
-elif [ $1 == '-v' ];then
-	verbose=true
-else
-	verbose=false
-fi
-
-#apt-cache policy curl should be usable to make check
-
-if [ $( which curl | wc -l ) -eq 0 ];then
-	echo curl is not installed, please install it
-	VERROR=1
-fi
-
-ROOTDIR=/opt/local
-WORKDIR=${ROOTDIR}/var/whatsnew
-
-mkwd()
-{
-	sudo mkdir -p  $1
-	chmod -R 777 ${ROOTDIR}
-}
 
 if [ ! -d ${WORKDIR} ];then
 	echo There is no ${WORKDIR} on this system, I\'ll make you one.
@@ -72,26 +131,38 @@ fi
 if [ ${VERROR} -eq 1 ];then
 	exit ${VERROR}
 fi
+ 
+#=====================================================================
+# what am i, these lines will vary depending on what it runs on, they work
+# for ubuntu & elementary
 
-
-remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
-fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
-
-remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
-
-oninstall=${WORKDIR}/oninstall.1word
-foundpkgs=${WORKDIR}/found.1word
-afterthought=${WORKDIR}/afterthought.lis
-
-if [ ! -z $1 ]; then
-	if [ $1 == "clean" ];then
-		rm ${remotemanifest} ${oninstall} ${foundpkgs} \
-			${afterthought}
-		exit
-	fi
-fi
+case `wos` in 
+elementary) : 
+	VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
+	VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
+	remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
+	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
+	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
+	;;
+ubuntu)		; ; ;;
+	VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
+	VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
+	remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
+	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
+	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
+	;;
+raspbian|Raspbian) ;
+	echo No code available for the Rasberry yet; exit 2
+	;;
+*)	VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
+	VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
+	remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
+	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
+	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
+	;;
+esac
 	
-
+#=====================================================================
 # main process path
 
 curl -o ${remotemanifest} -O $fullremotename 2>/dev/null
