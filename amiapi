@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# this tests the arch and OS to see if the system is a Raspberry PI and returns
+# a 0 or 1 depending on the result.
+
+# test for -x arch
+
+TNAME="Raspbian GNU/Linux"
+
+# WNAME=`cat /etc/*release | egrep ^NAME | cut -f2 -d'='`
+WID=`cat /etc/*release | egrep ^ID | cut -f2 -d'='`
+
+WARCH=`arch`
+ARMCPU=false
+
+case ${WARCH} in
+armv7l) :
+        # echo arch found, class = arm
+        WARCH=`arch`; ARMCPU=true
+        ;;
+*)      echo error in the 'arch' test, probably arch not defined
+        exit 2
+        ;;
+esac
+
+RASPBIAN=false
+
+case ${WID} in
+raspbian)       :
+        RASPBIAN=true ; ;;
+*)      :; ;;
+esac
+# echo $WNAME $WID $WARCH
+
+if [[ $ARMCPU ]] && [[ RASPBIAN ]]
+then
+        # echo this is a PI
+        exit 0
+else
+        exit 1
+fi
