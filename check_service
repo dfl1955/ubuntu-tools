@@ -1,0 +1,36 @@
+#!/bin/bash 
+
+#  this was written for the raspberry pi/debian jesse
+
+VER=1.0
+PNAME=$0
+USAGE="$0 on|off|all|tidy|<service name>"
+
+case $1 in
+tidy)	rm /tmp/cs*; exit ; ;;
+help)	echo ${USAGE}; exit ; ;;
+esac
+
+LOG=/tmp/cs$$
+service --status-all > ${LOG}
+flag=$1
+
+case $flag in
+on)	    cat $LOG | grep '+' ; ;;
+off)    cat $LOG | grep '-' ; ;;
+all)	cat $LOG ; ;;
+*)	    if [ `cat ${LOG} | wc -l` != '0' ]
+        then
+            cat $LOG | grep $1
+        else
+    	    echo Warning : Please check \$1, must be on, off, all or a valid service name
+    		rm ${LOG}
+            exit -1
+        fi
+        ;;
+esac
+
+if [ -e ${LOG} ]
+then
+	rm ${LOG}
+fi
