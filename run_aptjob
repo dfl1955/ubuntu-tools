@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# this would be cool if generiscised
+
 # this will need to run as superuser
 
 if [ $(whoami) != 'root' ];then
