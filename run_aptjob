@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# this will need to run as superuser
+
+if [ $(whoami) != 'root' ];then
+	echo $0 needs superuser privilege
+	exit 1
+fi 
+#
+# This program needs locate to be installed & logrotate
+#
+if [ $( which locate | wc -l ) -eq 0 ];then
+	echo locate is not installed, please install it
+	exit 2
+fi
+
+# This can be parameterised if you want
+
+dmesg()
+{
+	# dmesg errorcode program
+	ecode=$1; shift
+	unless [ $ecode == 0 ];then
+		echo $* Error Code $ecode
+		exit 1
+	fi
+}
+
+LOGDIR=/opt/local/var/apt
+
+model=apt_conf.model
+logconfmodel=$(locate ${model})
+
+if [ ! -d ${LOGDIR} ];then
+	mkdir -p ${LOGDIR}
+	# needs the logrotate conf files
+	for mode in update upgrade;do
+		logfile="${LOGDIR}/apt-${mode}.conf"
+		echo ${logfile%.conf}.log \{ > ${logfile}
+		cat  ${logconfmodel} >> ${logfile}
+		cat ${logfile}
+	done 
+fi
+exit
+
+#
+# main process
+#
+
+for mode in update upgrade;do
+	confile="${LOGDIR}/apt-${mode}.conf"
+	logfile="${logfile%.conf}.log"
+	echo $mode $confile $logfile
+	#logrotate  ${confile}
+	#nice apt-get $operation | tee ${logfile}
+	dmesg $? echo
+done
+
+

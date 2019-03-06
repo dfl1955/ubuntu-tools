@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# are there things to get?
+set -x
+apt list --upgradable 
+
