@@ -1,0 +1,11 @@
+#!/bin/bash
+
+wget http://archive.raspberrypi.org/debian/dists/stretch/main/binary-armhf/Packages > raspbian-stretch-manifest
+exit
+set -x
+workingdirectory=/opt/local/var/whatsnew/"
+fullremotename="http://archive.raspberrypi.org/debian/dists/stretch/main/binary-armhf/Packages > stretch9-manifest"
+remotemanifest="raspian-stretch9-manifest"
+remotepackagelist="raspian-stretch9-packages"
+curl -o ${remotemanifest} -O $fullremotename 2>/dev/null
+cat ${remotemanifest} | egrep "^Package" | cut -f2 -d" " | uniq > ${remotepackagelist}

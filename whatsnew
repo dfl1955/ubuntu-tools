@@ -32,6 +32,8 @@ mkwd()
 	chmod -R 777 ${ROOTDIR}
 }
 
+# difverbose() ; # display if verbose
+
 # set's the results directory
 
 ROOTDIR=/opt/local
@@ -47,16 +49,16 @@ foundpkgs=${WORKDIR}/found.1word
 afterthought=${WORKDIR}/afterthought.lis
 
 case `whoami` in
-root) 	superuser=true; ;;
-*)	superuser=false; ;;
+root) 	superuser=true; echo I am root;  ;;
+*)	superuser=false; echo I am not root; ;;
 esac
-
 
 wos()
 {
-cat /etc/*release | grep ^PRETTY | cut -f2 -d'=' | tr -d '"' | cut -f1 -d" "
+cat /etc/*release | grep ^PRETTY | cut -f2 -d'=' | tr -d '"' | cut -f1 -d" " 2>/dev/null
 }
-
+ 
+WOS=`wos` 
 
 # this program requires curl, I could use apt-cache policy to make the check,
 # but I chose to use 'which'.
@@ -66,12 +68,12 @@ if [ $( which curl | wc -l ) -eq 0 ];then
 	exit 3
 fi
 
-# also needs dpkg & cut
+# also needs dpkg & cut & awk
 
 #=====================================================================
 
 pname=$0
-usage="$0 [ -v ]"
+usage="$0  -ivsh "
 verbose=false
 
 # I need a install, verbose, clean, help and show switch
@@ -82,13 +84,21 @@ case $opt in
 -i|i)	# this is the install leg
 	# needs to be root
 	echo $pname $VNAME $VER ... in install results directory
-	: ; ;;
+	if [ ! -d ${WORKDIR} ];then
+		echo There is no ${WORKDIR} on this system, I\'ll make you one.
+		mkwd ${WORKDIR}
+	else
+		echo ${WORKDIR} already exists on this system
+	fi
+	exit
+	;;
 -h|h) 	echo $usage; exit
 	;;
 -v|v) 	# this is the verbose leg
 	verbose=true
 	echo $pname $VNAME $VER ... in verbose mode
-	; ;;
+	WOS=`wos` ; echo OS is $WOS
+	;;
 -c|c)	# this is the clean files leg
 	cleanresults=true
 	rm ${remotemanifest} ${oninstall} ${foundpkgs}  ${afterthought}
@@ -96,8 +106,8 @@ case $opt in
 	;;
 -s|s)	# this is the show leg
 	echo $pname $VNAME $VER ... show results
-	; ;;
-*)	echo $usgae
+	;;
+*)	echo $usage
 	exit 1
 	;;
 esac
@@ -138,22 +148,28 @@ fi
 # what am i, these lines will vary depending on what it runs on, they work
 # for ubuntu & elementary
 
+
 case `wos` in 
 elementary) : 
+	if [[ ${verbose} == true ]];then
+		# this isn't working properly
+		echo elementary processing path
+	fi
 	VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
 	VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
 	remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
 	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
 	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
 	;;
-ubuntu)		; ; ;;
+ubuntu) :
+	[verbose] && echo ubuntu processing path
 	VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
 	VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
 	remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
 	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
 	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
 	;;
-raspbian|Raspbian) ;
+raspbian|Raspbian) :
 	echo No code available for the Rasberry yet; exit 2
 	;;
 *)	VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
@@ -163,7 +179,8 @@ raspbian|Raspbian) ;
 	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
 	;;
 esac
-	
+
+exit	
 #=====================================================================
 # main process path
 

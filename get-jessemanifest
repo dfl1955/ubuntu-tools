@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# wget http://archive.raspberrypi.org/debian/dists/jessie/main/binary-armhf/Packages > jessie-manifest
+
+set -x
+workingdirectory=/opt/local/var/whatsnew/"
+fullremotename="http://archive.raspberrypi.org/debian/dists/jessie/main/binary-armhf/Packages > jessie-manifest"
+remotemanifest="raspian-jesse8-manifest"
+remotepackagelist="raspian-jesse8-packages"
+curl -o ${remotemanifest} -O $fullremotename 2>/dev/null
+cat ${remotemanifest} | egrep "^Package" | cut -f2 -d" " | uniq > ${remotepackagelist}
