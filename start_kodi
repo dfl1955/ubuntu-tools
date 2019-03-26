@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# written for kodi, might be usable for many
+
+VER=1.0
+
+LOG_DIR=/var/log/kodi
+LOG_NAME=kodi.log
+config_name=log.ctrl
+flog=${LOG_DIR}/${LOG_NAME}
+clog=${LOG_DIR}/${config_name}
+
+sudo logrotate -f ${clog}
+kodi > ${flog} 2>&1 &
