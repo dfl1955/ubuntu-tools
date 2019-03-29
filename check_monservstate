@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# this is a bit crude, needs to be placed in /opt/var
+
 # now I need to control the displays
 
 services=`cat monitored.services | egrep -v "^#"`
