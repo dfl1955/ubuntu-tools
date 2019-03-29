@@ -1,6 +1,7 @@
 #!/bin/bash
-
-# this would be cool if generiscised
+#
+# runs apt-get update/upgrade in batch wrapped in a log rotate
+#
 
 # this will need to run as superuser
 
@@ -8,54 +9,93 @@ if [ $(whoami) != 'root' ];then
 	echo $0 needs superuser privilege
 	exit 1
 fi 
-#
-# This program needs locate to be installed & logrotate
-#
-if [ $( which locate | wc -l ) -eq 0 ];then
-	echo locate is not installed, please install it
-	exit 2
-fi
 
-# This can be parameterised if you want
+LOGDIR=/opt/local/var/apt  # this might be parameterised, but I am happy with this
+
+case $1 in
+-i|--install|install)	  :
+	echo install routine
+	#
+	# are the necessary programs installed
+	#
+	for program in locate logrotate
+	do
+		echo looking for $program
+		if [ $( which ${program} | wc -l ) -eq 0 ];then
+			echo ${program} is not installed, please install it
+			exit 2
+		else
+			echo $program found
+			updatedb
+		fi
+	done
+	#
+	# make the lograte conf files and the working directory
+	#
+	model=apt_logrconf.model
+	#
+	# this won't work unless an updatedb has been run after the model has 
+	# been installed
+	#
+	logconfmodel=$(locate ${model})
+	cat $logconfmodel
+	if [ ! -d ${LOGDIR} ];then
+		mkdir -p ${LOGDIR}
+		# needs the logrotate conf files
+		for mode in update upgrade
+		do
+			echo making $mode logrotate conf file
+			logfile="${LOGDIR}/apt-${mode}.conf"
+			echo ${logfile%.conf}.log \{ > ${logfile}
+			cat  ${logconfmodel} >> ${logfile}
+			cat ${logfile}
+		done 
+	fi
+	echo the program $0 needs to be moved to a root path directory
+	exit
+	;;
+-c|--check|check) :
+	ls ${LOGDIR}
+	exit
+	;;
+-x|--uninstall|uninstall) :
+	echo -n uninstall
+	if [  -d ${LOGDIR} ];then
+		rm -rf ${LOGDIR}
+	fi
+	echo " " ... done
+	exit
+	;;
+esac
 
 dmesg()
 {
 	# dmesg errorcode program
 	ecode=$1; shift
-	unless [ $ecode == 0 ];then
+	if [ $ecode != 0 ];then
 		echo $* Error Code $ecode
 		exit 1
 	fi
 }
 
-LOGDIR=/opt/local/var/apt
-
-model=apt_conf.model
-logconfmodel=$(locate ${model})
-
-if [ ! -d ${LOGDIR} ];then
-	mkdir -p ${LOGDIR}
-	# needs the logrotate conf files
-	for mode in update upgrade;do
-		logfile="${LOGDIR}/apt-${mode}.conf"
-		echo ${logfile%.conf}.log \{ > ${logfile}
-		cat  ${logconfmodel} >> ${logfile}
-		cat ${logfile}
-	done 
-fi
-exit
+# echo calling apt 
 
 #
 # main process
 #
 
-for mode in update upgrade;do
+for mode in update upgrade
+do
 	confile="${LOGDIR}/apt-${mode}.conf"
-	logfile="${logfile%.conf}.log"
-	echo $mode $confile $logfile
-	#logrotate  ${confile}
-	#nice apt-get $operation | tee ${logfile}
-	dmesg $? echo
+	logfile="${confile%.conf}.log"
+	# echo $mode $confile $logfile
+	logrotate  ${confile}
+	nice apt-get -y $mode | tee ${logfile}
+	# ls ${LOGDIR}
+	dmesg $? apt-get may have failed
 done
+#
+# perhaps an update db
+#
 
 

@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# now I need to control the displays
+
+services=`cat monitored.services | egrep -v "^#"`
+
+services_tobetested=0
+services_running=0
+
+for service in ${services}
+do
+	echo -n ${service} .
+	services_tobetested=$(( $services_tobetested + 1 ))
+	systemctl is-active --quiet $service
+	if [ $? == 0 ];then
+		echo .. is running
+		services_running=$(( $services_running + 1 ))
+	else
+		echo .. is unavailable
+	fi
+done
+
+echo $services_running services are running
+services_us=$(( $services_tobetested - $services_running ))
+case $services_us in
+0)	exit 0; ;;	
+1)	echo $services_us service is unavailable;exit 1; ;;
+*) 	echo $services_us services are unavailable;exit 1; ;;
+esac
+ 
+# sudo logger writes a log message, probably only a failure to be written
