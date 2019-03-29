@@ -38,6 +38,7 @@ case $1 in
 	# been installed
 	#
 	logconfmodel=$(locate ${model})
+	# this beeds a if exists test on log conf model
 	cat $logconfmodel
 	if [ ! -d ${LOGDIR} ];then
 		mkdir -p ${LOGDIR}
