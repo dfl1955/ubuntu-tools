@@ -10,6 +10,12 @@ if [ $(whoami) != 'root' ];then
 	exit 1
 fi 
 
+verbose=1
+if [[ $1 == "--with-logger=yes" ]]
+then
+	verbose=0
+fi
+
 LOGDIR=/opt/local/var/apt  # this might be parameterised, but I am happy with this
 
 case $1 in
@@ -59,6 +65,11 @@ case $1 in
 	ls ${LOGDIR}
 	exit
 	;;
+-d|dpkgc)	:
+	echo dpkg --configure -a
+	dpkg --configure -a
+	exit
+	;;
 -x|--uninstall|uninstall) :
 	echo -n uninstall
 	if [  -d ${LOGDIR} ];then
@@ -67,9 +78,10 @@ case $1 in
 	echo " " ... done
 	exit
 	;;
+*)	:; ;;
 esac
 
-dmesg()
+displayEcode()
 {
 	# dmesg errorcode program
 	ecode=$1; shift
@@ -91,9 +103,9 @@ do
 	logfile="${confile%.conf}.log"
 	# echo $mode $confile $logfile
 	logrotate  ${confile}
-	nice apt-get -y $mode | tee ${logfile}
+	DEBIAN_FRONTEND=noninteractive apt-get -y $mode | tee ${logfile}
 	# ls ${LOGDIR}
-	dmesg $? apt-get may have failed
+	displayEcode $? apt-get may have failed
 done
 #
 # perhaps an update db

@@ -1,0 +1,7 @@
+# * * * * * command to execute
+
+@reboot        /opt/local/bin/run_updatedb --with-logger >> /opt/local/var/cron/updatedb.log 2>&1 &
+0 0 2-30/2 * * /opt/local/bin/run_updatedb >> /opt/local/var/cron/updatedb.log 2>&1 &
+#
+
+15 3 2-30/2 * * /opt/local/bin/run_aptjob >> /opt/local/var/cron/aptjob.log 2>&1 &

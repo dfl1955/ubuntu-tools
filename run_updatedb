@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# this program needs time and update db
+
+if [ `whoami` != "root" ]
+then
+	echo neds to run as root
+	exit 1
+fi
+
+
+echo `date +%c` updatedb starts
+echo
+time updatedb
+echo `date +%c` updatedb ends
+echo
+if [ $1 == "--with-logger" ]
+then
+	logger "updatedb run by cron"
+fi
