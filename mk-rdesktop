@@ -2,6 +2,10 @@
 
 # run as root
 
+# needs an or ^#Password
+
+# needs a mode switch
+
 LINE=$(egrep "^PasswordAuthentication" /etc/ssh/sshd_config | cut -f2 -d" ")
 
 echo Password Authentication is set to $LINE
@@ -29,9 +33,11 @@ do
     esac
 done
 
-exit
 
 cd
+
+# needs an am I raspbian 
+
 apt-get update
 apt-get install -y ubuntu-desktop
 apt-get install -y xfce4 
@@ -40,6 +46,8 @@ apt-get install -y vnc4server
 apt-get install -y xrdp
 
 echo xfce4-session > ~/.xsession
+
+# needs an am I raspbian 
 
 echo In \[xrdp1\] section of the xrdp.ini file the port parameter must be set to ask-1
 
