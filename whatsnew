@@ -170,7 +170,7 @@ elementary) :
 	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
 	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
 	echo this path is not yet supported
-	exit 
+	exit 10
 	;;
 ubuntu) :
 	[verbose] && echo ubuntu processing path
