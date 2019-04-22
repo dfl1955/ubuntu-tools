@@ -17,6 +17,7 @@
 
 lfiles ()
 {
+# repeated in fn wos
 for i in $(ls /etc/*release)
 do
 	if [ -f ${i} ];then
@@ -55,7 +56,14 @@ esac
 
 wos()
 {
-cat /etc/*release | grep ^PRETTY | cut -f2 -d'=' | tr -d '"' | cut -f1 -d" " 2>/dev/null
+rfiles=$( for rfile in $( ls /etc/*release )
+do
+	if [ -f $rfile ];then
+		echo $rfile
+	fi
+done )
+cat $rfiles | grep ^PRETTY | cut -f2 -d'=' | tr -d '"' | cut -f1 -d" " 2>/dev/null
+#cat /etc/*release | grep ^PRETTY | cut -f2 -d'=' | tr -d '"' | cut -f1 -d" " 2>/dev/null
 }
  
 WOS=`wos` 
@@ -73,12 +81,12 @@ fi
 #=====================================================================
 
 pname=$0
-usage="$0  -ivsh "
+usage="$0  -ivshc "
 verbose=false
 
 # I need a install, verbose, clean, help and show switch
 
-while getopts ivsh opt
+while getopts ivshc opt
 do
 case $opt in
 -i|i)	# this is the install leg
@@ -157,9 +165,12 @@ elementary) :
 	fi
 	VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
 	VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
+#	this doesn't work, we need the Elementary Manifest or the Equiv. Ubuntu manifest
 	remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
 	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
 	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
+	echo this path is not yet supported
+	exit 
 	;;
 ubuntu) :
 	[verbose] && echo ubuntu processing path
