@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ -z "$PS1" ]; then
+        echo This shell is not interactive
+else
+        echo This shell is interactive
+fi
+
+

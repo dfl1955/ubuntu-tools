@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo ${-}
+case "$-" in
+*i*)	echo This shell is interactive ;;
+*)	echo This shell is not interactive ;;
+esac
+echo ${PS1}
+if [ -z "$PS1" ]; then
+        echo This shell is not interactive
+else
+        echo This shell is interactive
+fi
+
+
