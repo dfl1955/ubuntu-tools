@@ -1,4 +1,7 @@
 #!/bin/bash
 
-cat /etc/*release | grep ^PRETTY | cut -f2 -d'=' | tr -d '"'
+. ./dfl1955_functions
+
+distroname $*
+
 
