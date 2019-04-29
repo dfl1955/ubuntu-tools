@@ -2,6 +2,10 @@
 
 # This has nt yet been tested.
 
+PVER=1.2
+
+# This was heavily amended on 29th March 2019, to use apt-mark
+
 #=====================================================================
 
 # This program compares the installed packages with a manifest and 
@@ -15,61 +19,54 @@
 #
 # functions
 
-lfiles ()
-{
-# repeated in fn wos
-for i in $(ls /etc/*release)
-do
-	if [ -f ${i} ];then
-		cat $i
-	fi
-done
-}
+. ./dfl1955_functions
 
 mkwd()
 {
-	# this sudo needs to be re-factored
-	sudo mkdir -p  $1
-	chmod -R 777 ${ROOTDIR}
+	# makes a 777 folder
+	mkdir -p  $1
+	chmod -R 777 ${1}
+
+# maybe put this in a loop use $* move it to the functions file
 }
 
+showinstallednonauto()
+{
+	#showinstallednonauto
+	comm -23 <(apt-mark showmanual | sort -u) <(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u)
+}
 # difverbose() ; # display if verbose
+
+case `whoami` in
+root) 	:; ;;
+*)	superuser=false; echo I am not root; exit -1; ;;
+esac
 
 # set's the results directory
 
+# this would be cool if could vary this as a parameter to the install mode code
 ROOTDIR=/opt/local
 WORKDIR=${ROOTDIR}/var/whatsnew
 
 case $( [[ -d ${WORKDIR} ]]) in
 true)	resultsdir=true; ;;
-false)	resultsdir=false; ;;
+false)	resultsdir=false ; echo $WORKDIR does not exist, you must run whatsnew -i ; ;;
 esac
 
 oninstall=${WORKDIR}/oninstall.1word
 foundpkgs=${WORKDIR}/found.1word
 afterthought=${WORKDIR}/afterthought.lis
 
-case `whoami` in
-root) 	superuser=true; echo I am root;  ;;
-*)	superuser=false; echo I am not root; ;;
-esac
-
-wos()
-{
-rfiles=$( for rfile in $( ls /etc/*release )
-do
-	if [ -f $rfile ];then
-		echo $rfile
-	fi
-done )
-cat $rfiles | grep ^PRETTY | cut -f2 -d'=' | tr -d '"' | cut -f1 -d" " 2>/dev/null
-#cat /etc/*release | grep ^PRETTY | cut -f2 -d'=' | tr -d '"' | cut -f1 -d" " 2>/dev/null
-}
+#wos()
+#{
+#	distroname -1 
+#}
  
-WOS=`wos` 
+WOS=`distroname -1` 
+#echo $WOS
 
 # this program requires curl, I could use apt-cache policy to make the check,
-# but I chose to use 'which'.
+# but I chose to use 'which'. curl is not now mandatory
 
 if [ $( which curl | wc -l ) -eq 0 ];then
 	echo curl is not installed, please install it
@@ -77,6 +74,8 @@ if [ $( which curl | wc -l ) -eq 0 ];then
 fi
 
 # also needs dpkg & cut & awk
+
+exit
 
 #=====================================================================
 
@@ -86,7 +85,7 @@ verbose=false
 
 # I need a install, verbose, clean, help and show switch
 
-while getopts ivshc opt
+while getopts ivshmc opt
 do
 case $opt in
 -i|i)	# this is the install leg
@@ -100,12 +99,16 @@ case $opt in
 	fi
 	exit
 	;;
+-m|m)	# forces a manifest retrieve
+	echo not yet ready
+	exit
+	;;
 -h|h) 	echo $usage; exit
 	;;
 -v|v) 	# this is the verbose leg
 	verbose=true
 	echo $pname $VNAME $VER ... in verbose mode
-	WOS=`wos` ; echo OS is $WOS
+	WOS=`distroname -1` ; echo OS is $WOS
 	;;
 -c|c)	# this is the clean files leg
 	cleanresults=true
@@ -130,10 +133,10 @@ done
 # on the raspberry pi. It is used to derive the manifest file location
 
 # VNAME=$( cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq )
-VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
+VNAME=$( listfiles | grep CODENAME | cut -f2 -d'=' | uniq )
 # this now includes a directory on elementary
 #VER=$( cat /etc/*release | grep RELEASE | cut -f2 -d'=' | uniq )
-VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
+VER=$( listfiles | grep RELEASE | cut -f2 -d'=' | uniq )
 
 #=====================================================================
 
@@ -144,7 +147,6 @@ VERROR=0
 if [ ! -d ${WORKDIR} ];then
 	echo There is no ${WORKDIR} on this system, I\'ll make you one.
 	# we could make it ourself
-	mkwd ${WORKDIR}
 	VERROR=1
 fi
 
@@ -157,37 +159,36 @@ fi
 # for ubuntu & elementary
 
 
-case `wos` in 
+case `distroname - ` in 
 elementary) : 
 	if [[ ${verbose} == true ]];then
 		# this isn't working properly
 		echo elementary processing path
 	fi
-	VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
-	VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
-#	this doesn't work, we need the Elementary Manifest or the Equiv. Ubuntu manifest
-	remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
-	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
-	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
-	echo this path is not yet supported
+	showinstallednonauto
 	exit 10
 	;;
 ubuntu) :
 	[verbose] && echo ubuntu processing path
-	VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
-	VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
+	VNAME=$( listfiles | grep CODENAME | cut -f2 -d'=' | uniq )
+	VER=$( listfiles | grep RELEASE | cut -f2 -d'=' | uniq )
 	remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
 	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
 	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
 	;;
 raspbian|Raspbian) :
-	echo No code available for the Rasberry yet; exit 2
+	if [[ ${verbose} == true ]];then
+		# this isn't working properly
+		echo raspbian processing path
+	fi
+	showinstallednonauto
+	exit 10
 	;;
-*)	VNAME=$( lfiles | grep CODENAME | cut -f2 -d'=' | uniq )
-	VER=$( lfiles | grep RELEASE | cut -f2 -d'=' | uniq )
-	remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
-	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
-	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
+*)	# other case
+	if [[ ${verbose} == true ]];then
+		echo raspbian processing path
+	fi
+	exit 10
 	;;
 esac
 
@@ -195,10 +196,20 @@ exit
 #=====================================================================
 # main process path
 
-curl -o ${remotemanifest} -O $fullremotename 2>/dev/null
-# if [ $? != 0 ];then etc
-cut -f1 ${remotemanifest} | sort > ${oninstall}
-
+get_remotemanifest()
+{
+# 	written for ubuntu; and only needed once; it should be part of
+#	the ubuntu installation leg; another reason for a staus file in ./etc
+	if [ $( which curl | wc -l ) -eq 0 ];then
+		echo curl is not installed, please install it
+		exit 3
+	fi
+	curl -o ${remotemanifest} -O $fullremotename 2>/dev/null
+	cut -f1 ${remotemanifest} | sort > ${oninstall}
+}
+ 
+get_remotemanifest
+# what have we got?
 dpkg --get-selections | awk '$2 ~ /^(install|hold)/ { print $1 }' | sort > ${foundpkgs} 
 
 comm -23 ${foundpkgs} ${oninstall} > ${afterthought}
