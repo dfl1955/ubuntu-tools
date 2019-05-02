@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# This has nt yet been tested.
-
 PVER=1.2
 
 # This was heavily amended on 29th March 2019, to use apt-mark
@@ -10,7 +8,8 @@ PVER=1.2
 
 # This program compares the installed packages with a manifest and 
 # produces a list of the newly installed packages i.e. those that I
-# have installed.
+# have installed. It was amended for some distros to use apt-mark rather
+# then obtain the manifest
 
 # It declares functions, analyses the switches. checks that it has
 # the privileges and resources it requires and then performs its work
@@ -23,13 +22,25 @@ PVER=1.2
 
 mkwd()
 {
-	# makes a 777 folder
-	mkdir -p  $1
-	chmod -R 777 ${1}
-
-# maybe put this in a loop use $* move it to the functions file
+# makes a 777 folder
+	mkdir -p  $1 ; chmod -R 777 ${1}
+	# maybe put this in a loop use $* move it to the functions file
 }
 
+make_wnconf()
+{
+# make_wnconf ${directory location of whatsnew.db}
+echo "# Parameter file for whats new
+#
+PATH=default
+SOURCEDIR=${1}
+ROOTDIR=/opt/local/
+WORKING+DIRECTORY=var/whatsnew
+#
+manifest=false
+#manifest_name=default
+"
+}
 showinstallednonauto()
 {
 	#showinstallednonauto
@@ -42,40 +53,18 @@ root) 	:; ;;
 *)	superuser=false; echo I am not root; exit -1; ;;
 esac
 
-# set's the results directory
+# set's the conf file
 
-# this would be cool if could vary this as a parameter to the install mode code
-ROOTDIR=/opt/local
-WORKDIR=${ROOTDIR}/var/whatsnew
+conffile=/opt/etc/whatsnew.conf
 
-case $( [[ -d ${WORKDIR} ]]) in
-true)	resultsdir=true; ;;
-false)	resultsdir=false ; echo $WORKDIR does not exist, you must run whatsnew -i ; ;;
-esac
+# these have been  oved to the legs
 
-oninstall=${WORKDIR}/oninstall.1word
-foundpkgs=${WORKDIR}/found.1word
-afterthought=${WORKDIR}/afterthought.lis
+#ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
+#WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
 
-#wos()
-#{
-#	distroname -1 
-#}
- 
-WOS=`distroname -1` 
-#echo $WOS
-
-# this program requires curl, I could use apt-cache policy to make the check,
-# but I chose to use 'which'. curl is not now mandatory
-
-if [ $( which curl | wc -l ) -eq 0 ];then
-	echo curl is not installed, please install it
-	exit 3
-fi
-
-# also needs dpkg & cut & awk
-
-exit
+#oninstall=${WORKDIR}/oninstall.1word
+#foundpkgs=${WORKDIR}/found.1word
+#afterthought=${WORKDIR}/afterthought.lis
 
 #=====================================================================
 
@@ -85,104 +74,111 @@ verbose=false
 
 # I need a install, verbose, clean, help and show switch
 
-while getopts ivshmc opt
+while getopts i:vdshmc opt
 do
 case $opt in
 -i|i)	# this is the install leg
 	# needs to be root
-	echo $pname $VNAME $VER ... in install results directory
-	if [ ! -d ${WORKDIR} ];then
-		echo There is no ${WORKDIR} on this system, I\'ll make you one.
-		mkwd ${WORKDIR}
+	echo $pname $(distroname) ... 
+	if [ ! -z $OPTARG ];then 
+		echo $OPTARG
+	fi
+	if [ -r ${conffile} ];then
+		echo There is a conf file at ${conffile}, this nees to be removed
+		exit 10
 	else
-		echo ${WORKDIR} already exists on this system
+		# make a conf file
+		make_wnconf $OPTARG > ${conffile}
+		ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
+		WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
+		if [ ! -d ${WORKDIR} ];then
+			echo There is no ${WORKDIR} on this system, I\'ll make you one.
+			mkwd ${WORKDIR}
+			# copy the db to the $WORKDIR
+		else
+			echo ${WORKDIR} already exists on this system
+		fi
+		cp $OPTARG/whatsnew.db ${WORKDIR}
 	fi
 	exit
 	;;
 -m|m)	# forces a manifest retrieve
 	echo not yet ready
+	# get it and write new conf file parameters
 	exit
 	;;
 -h|h) 	echo $usage; exit
 	;;
 -v|v) 	# this is the verbose leg
 	verbose=true
-	echo $pname $VNAME $VER ... in verbose mode
-	WOS=`distroname -1` ; echo OS is $WOS
+	echo $pname ... in verbose mode
+	echo OS is $(distroname -1) 
 	;;
 -c|c)	# this is the clean files leg
 	cleanresults=true
-	rm ${remotemanifest} ${oninstall} ${foundpkgs}  ${afterthought}
+	# rm ${remotemanifest} take from the conffile and reset the conffile
+	#			parameters
+	rm ${oninstall} ${foundpkgs} ${afterthought}
 	exit
 	;;
 -s|s)	# this is the show leg
-	echo $pname $VNAME $VER ... show results
+	echo $pname ... in verbose mode
+	# why would we do this, we always create the afterthoughts file
+	cat ${afterthought}
+	exit
 	;;
-*)	echo $usage
-	exit 1
+*)	:
+	if [ ! -r /opt/etc/whatsnew.conf ];then
+		echo you need to run an install of this tool; exit -1
+	fi
+	conffile=/opt/etc/whatsnew.conf
+	ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
+	WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
+
+	case $( [[ -d ${WORKDIR} ]]) in
+	true)	resultsdir=true; ;;
+	false)	resultsdir=false 
+		echo $WORKDIR does not exist, you must run whatsnew -i 
+		;;
+	esac
+
+	oninstall=${WORKDIR}/oninstall.1word
+	foundpkgs=${WORKDIR}/found.1word
+	afterthought=${WORKDIR}/afterthought.lis
 	;;
 esac
 done
 
-# needs some code to test cross validation of switches 
-# i.e. not s && i
-
-#=====================================================================
-#
-# This code assume ubuntu or more accuralty is known not to work with
-# on the raspberry pi. It is used to derive the manifest file location
-
-# VNAME=$( cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq )
-VNAME=$( listfiles | grep CODENAME | cut -f2 -d'=' | uniq )
-# this now includes a directory on elementary
-#VER=$( cat /etc/*release | grep RELEASE | cut -f2 -d'=' | uniq )
-VER=$( listfiles | grep RELEASE | cut -f2 -d'=' | uniq )
-
-#=====================================================================
-
-# a couple more tests, are they needed
-
-VERROR=0
-
-if [ ! -d ${WORKDIR} ];then
-	echo There is no ${WORKDIR} on this system, I\'ll make you one.
-	# we could make it ourself
-	VERROR=1
-fi
-
-if [ ${VERROR} -eq 1 ];then
-	exit ${VERROR}
-fi
- 
 #=====================================================================
 # what am i, these lines will vary depending on what it runs on, they work
 # for ubuntu & elementary
 
-
-case `distroname - ` in 
+case `distroname -1 ` in 
 elementary) : 
+	echo elementary
 	if [[ ${verbose} == true ]];then
 		# this isn't working properly
 		echo elementary processing path
 	fi
-	showinstallednonauto
-	exit 10
+	showinstallednonauto | tee ${afterthought}
 	;;
 ubuntu) :
 	[verbose] && echo ubuntu processing path
-	VNAME=$( listfiles | grep CODENAME | cut -f2 -d'=' | uniq )
-	VER=$( listfiles | grep RELEASE | cut -f2 -d'=' | uniq )
-	remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
-	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
-	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
+	# VNAME=$( listfiles | grep CODENAME | cut -f2 -d'=' | uniq )
+	# VER=$( listfiles | grep RELEASE | cut -f2 -d'=' | uniq )
+	# remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
+	# fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
+	# remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
+	showinstallednonauto | tee ${afterthougt}
+	exit
 	;;
 raspbian|Raspbian) :
 	if [[ ${verbose} == true ]];then
 		# this isn't working properly
 		echo raspbian processing path
 	fi
-	showinstallednonauto
-	exit 10
+	showinstallednonauto | tee ${afterthougt}
+	exit
 	;;
 *)	# other case
 	if [[ ${verbose} == true ]];then
@@ -196,23 +192,10 @@ exit
 #=====================================================================
 # main process path
 
-get_remotemanifest()
-{
-# 	written for ubuntu; and only needed once; it should be part of
-#	the ubuntu installation leg; another reason for a staus file in ./etc
-	if [ $( which curl | wc -l ) -eq 0 ];then
-		echo curl is not installed, please install it
-		exit 3
-	fi
-	curl -o ${remotemanifest} -O $fullremotename 2>/dev/null
-	cut -f1 ${remotemanifest} | sort > ${oninstall}
-}
- 
-get_remotemanifest
+# get_remotemanifest $remotemanifest $fullremotename $oninstall
 # what have we got?
-dpkg --get-selections | awk '$2 ~ /^(install|hold)/ { print $1 }' | sort > ${foundpkgs} 
-
-comm -23 ${foundpkgs} ${oninstall} > ${afterthought}
+#dpkg --get-selections | awk '$2 ~ /^(install|hold)/ { print $1 }' | sort > ${foundpkgs} 
+# comm -23 ${foundpkgs} ${oninstall} > ${afterthought}
 
 # a verbose switch to display the after thoughts  file
 
@@ -224,5 +207,3 @@ if [ $verbose == true ];then
 else
 	echo The afterthoughts file is called ${afterthought}
 fi
-
-# cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq 
