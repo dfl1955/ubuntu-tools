@@ -1,0 +1,6 @@
+#!/bin/bash
+
+if [ ! -d /opt/etc ];then
+	mkdir -p /opt/etc
+fi
+

@@ -9,7 +9,7 @@ case $1 in
 -t)	apt list --upgradable ; ;;
 -h)	echo $usage ; ;;
 *)	packages=$(apt list --upgradable 2>/dev/null | wc -l)
-	if [ $packages > 1 ];then
+	if [[ $packages > 1 ]];then
 		notify-send -i software-update-available "New packages" "updates avaiable, you need to run apt update and upgrade"
 		exit 1
 	else
