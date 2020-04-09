@@ -6,6 +6,11 @@ VER=1.0
 PNAME=$0
 USAGE="$0 on|off|all|tidy|<service name>"
 
+if [ -z $1 ];then
+	echo $USAGE; exit
+fi
+	
+
 case $1 in
 tidy)	rm /tmp/cs*; exit ; ;;
 help)	echo ${USAGE}; exit ; ;;

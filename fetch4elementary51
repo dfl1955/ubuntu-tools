@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# written for a vbox guest
+
+# needs the amiroot test
+VER=0.8
+
+USAGE="$0 [-b|-u|-n|-x|-h|-d|-l|-w|-?"
+# basic 
+
+case $1 in
+-b) 	#basic
+	apt-get install -y git gdebi software-properties-common
+	;;
+-u)	# user utilities
+	apt-get install -y baobab firefox graphviz xdot xsltproc vim
+	;;
+-n)	#  indicator-stickynotes
+	add-apt-repository ppa:umang/indicator-stickynotes
+	apt-get update
+	apt-get install indicator-stickynotes
+	;;
+-x)	echo down load chrome avd microsoft code as .deb files
+	echo and install using gdebi
+	;;
+-h)	# another one best installed by hand hugo 
+	echo install hugo using wget & gdebi
+	;;
+-d)	# mysql
+	apt-get install -y  mysql-client mysql-server
+	;;
+-l)	# languages
+	apt-get install -y nodejs php5 python3-yaml python-pip python-software-properties
+	;;
+-w)	# wallpapers 
+	apt-get install -y ubuntu-wallpapers-karmic ubuntu-wallpapers-lucid ubuntu-wallpapers-maverick ubuntu-wallpapers-natty ubuntu-wallpapers-oneiric ubuntu-wallpapers-precise ubuntu-wallpapers-quantal ubuntu-wallpapers-raring ubuntu-wallpapers-saucy ubuntu-wallpapers-trusty ubuntu-wallpapers-utopic ubuntu-wallpapers-vivid ubuntu-wallpapers-wily ubuntu-wallpapers-xenial ubuntu-wallpapers-yakkety ubuntu-wallpapers-zesty ubuntu-wallpapers-artful
+	apt-get install -y ubuntu-wallpapers
+	;;
+*)	echo ${USAGE}
+	;;
+esac
