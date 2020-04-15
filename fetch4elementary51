@@ -25,6 +25,8 @@ case $1 in
 	;;
 -h)	# another one best installed by hand hugo 
 	echo install hugo using wget & gdebi
+	echo may need aws CLI
+	# curl --output awscli-exe.zip "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
 	;;
 -d)	# mysql
 	apt-get install -y  mysql-client mysql-server

@@ -1,9 +1,20 @@
 #!/bin/bash
 #
 # runs apt-get update/upgrade in batch wrapped in a log rotate
-#
+# does cron-apt make this redundant? aptitude claims to write a log
+
+# should this run apt-get update, many say no.
 
 # this will need to run as superuser
+
+USAGE="$0 --with-logger=yes | -i | -c | -d | -x
+
+	-i|-install|install 	creates the defualt working directories
+	-c|-check|check		checks the logdir
+	-d|-dpkgc		runs thedpkg command if the last apt failed
+	-x|-uninstall|uninstall	destroys the logdir and its contents
+
+	"
 
 if [ $(whoami) != 'root' ];then
 	echo $0 needs superuser privilege
