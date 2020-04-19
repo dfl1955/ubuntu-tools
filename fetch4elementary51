@@ -10,7 +10,7 @@ USAGE="$0 [-b|-u|-n|-x|-h|-d|-l|-w|-?"
 
 case $1 in
 -b) 	#basic
-	apt-get install -y git gdebi software-properties-common samba
+	apt-get install -y git gdebi software-properties-common samba locate
 	;;
 -u)	# user utilities
 	apt-get install -y baobab firefox graphviz xdot xsltproc vim

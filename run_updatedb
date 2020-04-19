@@ -4,6 +4,10 @@
 
 # amended 15/4/2019, final if test amended
 
+# this needs the log directory to be created for non reboot instances
+# note that run_apt has an install module and checks that the programs
+# are installed
+
 if [ `whoami` != "root" ]
 then
 	echo neds to run as root
@@ -16,6 +20,7 @@ echo
 time updatedb
 echo `date +%c` updatedb ends
 echo
+# this needs the log directory to be created for non reboot instances
 if [[ $1 -eq "--with-logger" ]]
 then
 	logger "updatedb run by cron"
