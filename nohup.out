@@ -1,3 +1,0 @@
-/usr/bin/find: '/run/user/1001/gvfs': Permission denied
-/usr/bin/find: '/run/user/1000/gvfs': Permission denied
-/usr/bin/find: '/home/dave/thinclient_drives': Permission denied
