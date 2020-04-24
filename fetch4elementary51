@@ -31,6 +31,8 @@ case $1 in
 -d)	# mysql
 	apt-get install -y  mysql-client mysql-server
 	;;
+# raspbian needs the notification daemon installed if we want notify-send
+# elementary needs libnotify-bin
 -l)	# languages
 	apt-get install -y nodejs php5 python3-yaml python-pip python-software-properties
 	;;

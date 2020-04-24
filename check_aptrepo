@@ -2,6 +2,8 @@
 
 # on elementary, notify-osd must be installed and the icons need to be in /usr/share/icons
 
+# having a problem with notify-send on the raspbian, will I have to write a wish script?
+
 usage="check_aptrepo [-t|-h]"
 # are there things to get?
 
