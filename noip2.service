@@ -1,5 +1,5 @@
 [Unit]
-Decription=noip2 dynamic update client
+Description=noip2 dynamic update client
 After=network.target
 
 [Service]
