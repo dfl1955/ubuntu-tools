@@ -4,7 +4,7 @@
 # This was heavily amended on 29th March 2019, to use apt-mark and
 # heavily tidied up in Augiust 2019 to make the code easier to grok.
 
-PVER=1.4
+PVER=1.3.4
 echo $0 ${PVER}
 pname=$0
 usage="$0  -ivspc | -h"
@@ -19,8 +19,7 @@ ETCDIR=/opt/etc 	# this is a a standard
 # This program compares the installed packages with a manifest and 
 # produces a list of the newly installed packages i.e. those that I
 # have installed. It was amended for some distros to use apt-mark rather
-# then obtain the manifest and the manifest retreival was put into
-# abeyance.
+# then obtain the manifest
 
 # It declares functions, analyses the switches. checks that it has
 # the privileges and resources it requires and then performs its work
@@ -61,16 +60,13 @@ showinstallednonauto()
 {
 	#showinstallednonauto
 	comm -23 <(apt-mark showmanual | sort -u) <(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u)
-	# the redirects arn't working
 }
 #
 # difverbose() ; # display if verbose
 
-if [ ! -z $1 ];then
-	if [[ $1 == "-h" ]];then
-		echo ${usage}
-		exit 0
-	fi
+if [ $1 -eq "-h" ];then
+	echo ${usage}
+	exit 0
 fi
 
 case `whoami` in
@@ -101,6 +97,8 @@ echo all arguments = $*
 
 while getopts ivdspmc opt
 do
+	echo 2nd loop
+	echo opt = $opt
 	case ${opt} in
 	-i|i)	# this is the install leg
 		# needs to be root
@@ -141,7 +139,6 @@ do
 		;;
 	-c|c)	# this is the clean files leg
 		cleanresults=true
-		# move the variable settings to before the test
 		# rm ${remotemanifest} take from the conffile and reset the conffile
 		#			parameters
 		rm ${oninstall} ${foundpkgs} ${afterthought}
@@ -166,43 +163,30 @@ do
 		cat ${afterthought}
 		exit
 		;;
-	*)	print ${usage}
-		exit 2
+	*)	:
+		if [ ! -r /opt/etc/whatsnew.conf ];then
+			echo you need to run an install of this tool; exit -1
+		fi
+		conffile=/opt/etc/whatsnew.conf
+		ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
+		WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
+	
+		case $( [[ -d ${WORKDIR} ]]) in
+		true)	resultsdir=true; ;;
+		false)	resultsdir=false 
+			echo $WORKDIR does not exist, you must run whatsnew -i 
+			;;
+		esac
+	
+		oninstall=${WORKDIR}/oninstall.1word
+		foundpkgs=${WORKDIR}/found.1word
+		afterthought=${WORKDIR}/afterthought.lis
 		;;
 	esac
 done
 
-#===================================================================
-#
-# This sets the file locations and is to run if a report is required.
-#
-if [ ! -r /opt/etc/whatsnew.conf ];then
-	echo you need to run an install of this tool; exit -1
-fi
-conffile=/opt/etc/whatsnew.conf
-ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
-WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
+exit
 
-case $( [[ -d ${WORKDIR} ]]) in
-true)	resultsdir=true; ;;
-false)	resultsdir=false 
-	echo $WORKDIR does not exist, you must run whatsnew -i 
-	exit 10
-	;;
-esac
-	
-oninstall=${WORKDIR}/oninstall.1word
-if [ ! -r ${oninstall} ];then
-	touch $oninstall
-fi
-foundpkgs=${WORKDIR}/found.1word
-if [ ! -r ${foundpkgs} ];then
-	touch $foundpkgs
-fi
-afterthought=${WORKDIR}/afterthought.lis
-if [ ! -r $afterthought ];then
-	touch ${afterthought}
-fi
 
 #=====================================================================
 # what am i, these lines will vary depending on what it runs on, they work
@@ -212,7 +196,7 @@ case `distroname -1 ` in
 elementary) : 
 	echo elementary
 	if [[ ${verbose} == true ]];then
-		# this isn't working properly; see Raspian Code
+		# this isn't working properly
 		echo elementary processing path
 	fi
 	showinstallednonauto | tee ${afterthought}
@@ -228,15 +212,11 @@ ubuntu) :
 	exit
 	;;
 raspbian|Raspbian) :
-	echo afterthoughts file = ${afterthought}
-	if [[ ${verbose} == "true" ]];then
-		echo raspbian processing path in verbose mode
-		showinstallednonauto | tee ${afterthougt}
-	else
-		echo quiet leg
-		echo afterthoughts file = ${afterthought}
-		showinstallednonauto | echo  > ${afterthougt} 2>1 
+	if [[ ${verbose} == true ]];then
+		# this isn't working properly
+		echo raspbian processing path
 	fi
+	showinstallednonauto | tee ${afterthougt}
 	exit
 	;;
 *)	# other case

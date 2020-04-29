@@ -142,7 +142,8 @@ do
 	confile="${LOGDIR}/apt-${mode}.conf"
 	logfile="${confile%.conf}.log"
 	# echo $mode $confile $logfile
-	logrotate  ${confile}
+	# check this path for programs other than Raspbian
+	/usr/sbin/logrotate  ${confile}
 	DEBIAN_FRONTEND=noninteractive apt-get -y $mode | tee ${logfile}
 	# ls ${LOGDIR}
 	displayEcode $? apt-get may have failed
