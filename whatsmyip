@@ -1,14 +1,19 @@
 #!/bin/bash
 
-# Author Dave Levy	Date 30 Aug 2016 	Version 1.1
+# Author Dave Levy	Date 30 Aug 2016 	Version 1.2
 
 # obtains the ip address of a given ethernet device, via menu or from the cli
-# the ip address is echoed via stdout getmyip -h reports the arguments
+# the ip address is echoed via stdout
 
 # -h help, -m menu, -d a debug mode enhanced diagnostics  or -b which allows hte naming
 #	of the device. 
 
-# Currently the portname is overridden by an assignment statement.
+# i.e. using -m offers you a list of devices from which you can choose or
+# -b allows the specification of the device from which the ip address is to be
+# taken
+
+# needs to run as root, could do with a clean to delete the persistance file 
+# and a switch to merely cat the file
 
 # why not use ip -4 or my showsysip script
 
@@ -16,10 +21,13 @@
 ERROR="Error in command line arguments"
 USAGE="$(basename $0) [ -h | -m | -d | -b device ]"
 
-debug=false
+debug=/bin/false
 debugecho()
 {
-	[ $debug ] && echo $*
+	if [ ${debug} == true ]
+	then
+		echo $*
+	fi
 }
 
 
@@ -64,12 +72,13 @@ esac
 done
 
 
-PORTNAME=enp0s8
-debugecho Portname rest to $PORTNAME by default code path
+#PORTNAME=enp0s8
+#debugecho Portname rest to $PORTNAME by default code path
 
 # this could be parameterised a -o flag
 
-PERSISTANCE="${HOME}/.myip"
+PERSISTANCE="/usr/local/etc/.myip"
 
+debugecho the persistance file, $PERSISTANCE exists
 ifconfig $PORTNAME | grep "inet addr" | cut -f2 -d":" | cut -f1 -d" " > ${PERSISTANCE}
 cat ${PERSISTANCE}
