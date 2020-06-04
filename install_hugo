@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# version 0.8
+
+# takes a URL as $1 which should be a hugo git url and then
+# gets and installs it
+
+# needs to wait for the next release to test the install
+
+# $0 $(./whathugoversion | tail -1)
+
+set -x
+cwd=$(pwd)
+
+rm /tmp/hugo*.deb
+cd /tmp
+
+wget $1
+
+ls hugo*.deb
+gdebi --help
+
+# gdebi 
+
+
+rm /tmp/hugo*.deb
+ls /tmp/hugo*.deb
+
+cd $cwd
