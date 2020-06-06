@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# this needs an environment declared to make this work and is untested.
+
+case $1 in
+-i) git clone http://github.com/rubys/venus.git ; ;;
+*)  git pull http://githib.com/ruby/venus.git   ; ;;
+esac
