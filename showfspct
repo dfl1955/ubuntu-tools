@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# this program uses df to obtain the pct full of a file system 
+
+usage="$0 [-h | -v | -d <fsname>"
+VER=1.0
+
+# needed until -d is installed
+ofs="/"
+if [ ! -z $1 ];then
+	case $1 in
+	-h|h)	echo $usage; exit; ;;
+	-v|c)	echo $0 $VER; exit; ;;
+	-d|d)	echo "Not yet implemented, setting directory to /"; ;;
+	*)	echo $usage ; exit 1 ; ;;
+	esac
+fi
+
+PCT=$( df ${ofs} | awk '{print $5}' | tail -1 | tr -d "%")
+echo ${PCT}
+
+
