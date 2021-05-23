@@ -4,4 +4,5 @@
 0 0 2-30/2 * * /usr/local/bin/run_updatedb >> /opt/local/var/cron/updatedb.log 2>&1 &
 #
 
+30 3 2-30/2 * * /usr/local/bin/check_hugoversion >> /opt/local/var/cron/hugoversion.log 2>&1 &
 15 3 2-30/2 * * /usr/local/bin/run_aptjob >> /opt/local/var/cron/aptjob.log 2>&1 &

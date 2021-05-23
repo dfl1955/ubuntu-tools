@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+#
+# This program reports if hugo needs to be updated, it also uses
+# the exit code to signify if change is required
+#
+# exit 0 - local version uptodate
+# exit 1 = update available
+
+tempDir=/tmp
+
+URL=$( curl -s https://api.github.com/repos/gohugoio/hugo/releases/latest \
+| grep "browser_download_url.*deb" \
+| grep "Linux-64" \
+| head -1  \
+| cut -d : -f 2,3 \
+| tr -d  \" )
+
+remoteVersion=$(echo $URL | cut -f8 -d"/")
+localVersion=$( hugo version | cut -f5 -d" "| cut -f1 -d"-")
+
+if [[ $remoteVersion == $localVersion ]];then
+	echo Local Hugo Version = ${localVersion} is latest version
+	echo $URL
+	exit
+else
+	echo Remote Version = ${remoteVersion} \: Local Version ${localVersion} ... update required
+	echo $URL
+	exit 1
+fi
+
+
+
+
+
+
+
