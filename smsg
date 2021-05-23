@@ -1,0 +1,103 @@
+#!/usr/bin/wish
+
+# if no file, or file empty do nothing
+
+if { ! [file exists /usr/local/etc/messages.txt] } {
+   exit }
+
+if { [file size /usr/local/etc/messages.txt] == 0 } {
+   exit }
+
+#
+# Author :  DFL
+
+# Version : 3.0
+# Date :    May 2021
+# Licence : Creative Commons BY-SA
+
+# Description
+#     displays a message when run, with an acknowledge button
+
+# Version Comment:
+#     now has the message held in a text file and is multiline
+#     checks for existence of message file and not null
+
+#	this version is derived from an MOTD program. It would be 
+#	to inherit the icon, a title and the text from the command 
+#	line
+#
+
+wm title . {smsg}
+wm iconname . {smsg}
+
+# location only - needs review
+
+wm geometry . +1550+200
+
+frame .top
+frame .top.margin
+frame .top.motd
+frame .bottom
+
+# take the command argument list an put it in the messages
+
+set messages [open /usr/local/etc/messages.txt]
+
+lappend messagelist [gets $messages]
+
+# if fail exit; means the file is empty
+
+while { [gets $messages line ] >= 0 } {
+	lappend messagelist $line
+}
+
+# throw a line
+
+lappend messagelist ""
+
+# $messagelist is a list, that contains the messages
+
+set buttontext "  OK  "
+
+# make sure its there
+
+# tklibrbary is at /usr/share/tcltk/tk8.6/images
+
+image create photo infopic -file [file join $tk_library images i.gif]
+label .top.margin.icon  -image infopic
+
+# the use of .f below, allows the easy integration of 
+# multiple objects into the content pane
+
+frame .top.motd.f -width 75
+
+# this now needs to go into a loop and a list
+
+#label .top.motd.f.mess -text $messagetext
+
+# the lines need a packing name
+
+set i 0
+set stem ".top.motd.f.mess"
+
+foreach message $messagelist {
+    label $stem$i -anchor w  -text $message
+    pack $stem$i  -side top  -fill x
+    incr i 1
+}
+
+button .bottom.dismiss -text $buttontext -command "exit"
+
+# the messages have been packed into .top.motd.f in the loop
+
+pack   .top.margin.icon
+pack   .top.motd.f -padx 8
+
+pack   .bottom.dismiss
+pack   .top.margin .top.motd -side left
+pack   .top .bottom
+
+proc exit {} {
+    destroy .
+}
+

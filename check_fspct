@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# on elementary, notify-osd must be installed and the icons need to be in /usr/share/icons
+
+# having a problem with notify-send on the raspbian, will I have to write a wish script?
+
+usage="check_fscpct  [-h]"
+# are there things to get?
+
+icon=drive-harddisk
+case $1 in
+-h)	echo $usage ; ;;
+*)	PCT=$(./showfspct)
+	if [[ $PCT > 94 ]]; then
+		notify-send -i $icon "root file system full" "root filesystem ${PCT}% full, clean it up"
+		#notify-send -i software-update-available "root file system full" "root filesystem full, clean it up"
+		exit 1
+	else
+		exit
+	fi
+	;;
+esac
+	
+

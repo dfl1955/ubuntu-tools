@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+# install 
+
+# if % > 95 then alert
+
+# use errormesag to write a log alert
+
+# do I want a private log file.

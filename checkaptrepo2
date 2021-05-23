@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# on elementary, notify-osd must be installed and the icons need to be in /usr/share/icons
+
+# having a problem with notify-send on the raspbian, will I have to write a wish script?
+
+usage="check_aptrepo [-t|-h]"
+# are there things to get?
+
+
+if [ $(./amiapi) ];
+then
+	echo I am a pi
+else
+	echo I am not a pi
+fi
+
+
+case $1 in
+-t)	apt list --upgradable ; ;;
+-h)	echo $usage ; ;;
+*)	packages=$(apt list --upgradable 2>/dev/null | wc -l)
+	if [[ $packages > 1 ]];then
+		notify-send -i software-update-available "New packages" "updates avaiable, you need to run apt update and upgrade"
+		exit 1
+	else
+		exit
+	fi
+	;;
+esac
+	
+
