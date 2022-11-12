@@ -2,6 +2,8 @@
 
 # Author Dave Levy	Date 30 Aug 2016 	Version 1.2
 
+# 12 Nov 2022	Version: 1.3
+
 # obtains the ip address of a given ethernet device, via menu or from the cli
 # the ip address is echoed via stdout
 
@@ -71,14 +73,23 @@ help)	echo ${USAGE}
 esac
 done
 
-
 #PORTNAME=enp0s8
 #debugecho Portname rest to $PORTNAME by default code path
 
 # this could be parameterised a -o flag
 
 PERSISTANCE="/usr/local/etc/.myip"
+rm ${PERSISTANCE}
 
-debugecho the persistance file, $PERSISTANCE exists
-ifconfig $PORTNAME | grep "inet addr" | cut -f2 -d":" | cut -f1 -d" " > ${PERSISTANCE}
-cat ${PERSISTANCE}
+# next test should be based on OS not arch. 
+case $(arch) in
+armv7l) debugecho this is an ARM system  
+	SEARCHSTRING="inet"
+	ifconfig $PORTNAME | grep inet | head -1 | cut -f2 -d"t" | cut -f2 -d" " | tee ${PERSISTANCE}
+	;;
+*)	echo aerch = else;
+	SEARCHSTRING='"inet addr"'
+	ifconfig $PORTNAME | grep "inet addr" | head -1 | cut -f2 -d":" | cut -f1 -d" " | tee ${PERSISTANCE}
+	;;
+esac
+
