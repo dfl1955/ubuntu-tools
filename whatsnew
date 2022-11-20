@@ -60,6 +60,7 @@ manifest=false
 showinstallednonauto()
 {
 	#showinstallednonauto
+	# the initial statatus file is not available on all systems; see https://github.com/termux/termux-packages/issues/674
 	comm -23 <(apt-mark showmanual | sort -u) <(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u)
 	# the redirects arn't working
 }
