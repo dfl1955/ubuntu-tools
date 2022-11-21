@@ -16,6 +16,7 @@ case $1 in
 		#notify-send -i software-update-available "root file system full" "root filesystem full, clean it up"
 		exit 1
 	else
+		notify-send -i $icon "root file system status" "  root file system is ${PCT}\% full"
 		exit
 	fi
 	;;
