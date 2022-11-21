@@ -3,6 +3,8 @@
 # this tests the arch and OS to see if the system is a Raspberry PI and returns
 # a 0 or 1 depending on the result.
 
+# why don't I just link to /bin/true or false when I install
+
 # test for -x arch
 
 TNAME="Raspbian GNU/Linux"
