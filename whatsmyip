@@ -81,15 +81,22 @@ done
 PERSISTANCE="/usr/local/etc/.myip"
 rm ${PERSISTANCE}
 
-# next test should be based on OS not arch. 
+# next test should be based on OS not arch. using my distroname function.
+
 case $(arch) in
 armv7l) debugecho this is an ARM system  
 	SEARCHSTRING="inet"
 	ifconfig $PORTNAME | grep inet | head -1 | cut -f2 -d"t" | cut -f2 -d" " | tee ${PERSISTANCE}
 	;;
-*)	echo aerch = else;
+*)	echo arch = else;
 	SEARCHSTRING='"inet addr"'
 	ifconfig $PORTNAME | grep "inet addr" | head -1 | cut -f2 -d":" | cut -f1 -d" " | tee ${PERSISTANCE}
 	;;
 esac
+
+# on the U20 machine
+# ifconfig $PORTNAME | grep "inet " | awk '{print $2}' > ${PERSISTANCE}
+
+cat ${PERSISTANCE}
+
 
