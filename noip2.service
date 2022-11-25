@@ -8,7 +8,6 @@ User=root
 ExecStart=/usr/local/bin/noip2
 RestartSec=300
 Restart=on-failure
-TimeoutStartSec=30       # is this required after Type=forking
 
 [Install]
 WantedBy=multi-user.target
