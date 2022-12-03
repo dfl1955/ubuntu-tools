@@ -1,0 +1,24 @@
+
+contains()
+{
+# $1 must be set & grep must be in the PATH
+	echo $1 | grep $2 > /dev/null
+	code=$?
+	return $code
+}
+
+
+alias dosh="sudo docker"
+alias dsh="sudo docker"
+
+iam4git()
+{
+	git config --global user.name "Dave Levy"
+	git config --global user.email "davelevy.eu@gmail.com"
+}
+
+export GCM_CREDENTIAL_STORE=gpg
+export GIT_AUTHOR_NAME="Dave Levy"
+export GIT_AUTHOR_EMAIL="davelevy.eu@gmail.com"
+export GIT_COMMITTER_NAME="Dave Levy"
+export GIT_COMMITTER_EMAIL="davelevy.eu@gmail.com"
