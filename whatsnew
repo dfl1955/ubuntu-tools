@@ -3,16 +3,14 @@
 
 # This was heavily amended on 29th March 2019, to use apt-mark and
 # heavily tidied up in Augiust 2019 to make the code easier to grok.
+# and amended Nov 2022 on ubuntu
 
-PVER=1.4
-echo $0 ${PVER}
+PVER=1.7 ; echo $0 ${PVER}
 pname=$0
-usage="$0  -ivspc | -h"
+usage="$0  -ivfspc | -h"
 set -x
 
 ETCDIR=/opt/etc 	# this is a a standard
-
-# This was heavily amended on 29th March 2019, to use apt-mark
 
 #=====================================================================
 
@@ -39,7 +37,6 @@ mkwd()
 {
 	# makes a 777 folder
 	mkdir -p  $1 ; chmod -R 777 ${1}
-	# maybe put this in a loop use $* move it to the functions file
 }
 
 make_wnconf()
@@ -60,7 +57,8 @@ manifest=false
 showinstallednonauto()
 {
 	#showinstallednonauto
-	# the initial statatus file is not available on all systems; see https://github.com/termux/termux-packages/issues/674
+	# the initial status file is not available on all systems; see https://github.com/termux/termux-packages/issues/674
+	# this needs to be put in line
 	comm -23 <(apt-mark showmanual | sort -u) <(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u)
 	# the redirects arn't working
 }
@@ -85,12 +83,13 @@ conffile=${ETCDIR}/whatsnew.conf
 
 # these have been  oved to the legs
 
-#ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
-#WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
+ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
+WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
 
-#oninstall=${WORKDIR}/oninstall.1word
-#foundpkgs=${WORKDIR}/found.1word
-#afterthought=${WORKDIR}/afterthought.lis
+#packagemanifest= this need a constant name
+oninstall=${WORKDIR}/oninstall.1word ;# this is the working copy, if the package manifest exists, then it should be created by cat, else by gunzip
+foundpkgs=${WORKDIR}/found.1word
+afterthought=${WORKDIR}/afterthought.lis
 
 #=====================================================================
 
@@ -100,7 +99,7 @@ verbose=false
 
 echo all arguments = $*
 
-while getopts ivdspmc opt
+while getopts ivdfspmc opt
 do
 	case ${opt} in
 	-i|i)	# this is the install leg
@@ -139,6 +138,12 @@ do
 		verbose=true
 		echo $pname ... in verbose mode
 		echo OS is $(distroname -1) 
+		;;
+	-f|f)	# create the install catalog
+		#if Ubuntu
+		(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u) > ${WORKDIR}/manifest.dayone
+		ls -l $WORKDIR/manifest.dayone
+		exit
 		;;
 	-c|c)	# this is the clean files leg
 		cleanresults=true
@@ -218,14 +223,13 @@ elementary) :
 	fi
 	showinstallednonauto | tee ${afterthought}
 	;;
-ubuntu) :
+ubuntu|Ubuntu) :
 	[verbose] && echo ubuntu processing path
-	# VNAME=$( listfiles | grep CODENAME | cut -f2 -d'=' | uniq )
-	# VER=$( listfiles | grep RELEASE | cut -f2 -d'=' | uniq )
-	# remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
-	# fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
-	# remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
-	showinstallednonauto | tee ${afterthougt}
+	# we no longer get the manifest for Ubuntu
+	# showinstallednonauto
+	# the initial status file is not available on all systems; see https://github.com/termux/termux-packages/issues/674
+	comm -23 <(apt-mark showmanual | sort -u) <(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u) | tee ${afterthought}
+	[verbose] && (cat ${afterthough})
 	exit
 	;;
 raspbian|Raspbian) :
@@ -250,7 +254,7 @@ esac
 
 exit	
 #=====================================================================
-# main process path
+# aftermath  process path
 
 # get_remotemanifest $remotemanifest $fullremotename $oninstall
 # what have we got?
