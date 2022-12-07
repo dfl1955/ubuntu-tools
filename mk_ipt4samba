@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# amiroot
+
+# think it needs a test on $#
+
+
+if [ $1 ==  "delete" ];then
+	echo deleting rules
+	iptables -D INPUT -p udp -m udp --dport 137 -j ACCEPT
+	iptables -D INPUT -p udp -m udp --dport 138 -j ACCEPT
+	iptables -D INPUT -p tcp -m tcp --dport 139 -j ACCEPT
+	iptables -D INPUT -p tcp -m tcp --dport 445 -j ACCEPT
+else
+	echo adding rules
+	iptables -A INPUT -p udp -m udp --dport 137 -j ACCEPT
+	iptables -A INPUT -p udp -m udp --dport 138 -j ACCEPT
+	iptables -A INPUT -p tcp -m tcp --dport 139 -j ACCEPT
+	iptables -A INPUT -p tcp -m tcp --dport 445 -j ACCEPT
+fi
+
+iptables -L
+
+
