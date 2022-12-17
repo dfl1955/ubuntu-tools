@@ -5,7 +5,7 @@
 # heavily tidied up in Augiust 2019 to make the code easier to grok.
 # and amended Nov 2022 on ubuntu
 
-PVER=1.7 ; echo $0 ${PVER}
+PVER=1.7.2 ; echo $0 ${PVER}
 pname=$0
 usage="$0  -ivfspc | -h"
 set -x
@@ -127,6 +127,7 @@ do
 			# from a folder with a whatsnew.db
 			cp ./whatsnew.db ${WORKDIR}
 		fi
+		# needs a mk working direcotry
 		exit
 		;;
 	-m|m)	# forces a manifest retrieve
@@ -234,6 +235,7 @@ ubuntu|Ubuntu) :
 	;;
 raspbian|Raspbian) :
 	echo afterthoughts file = ${afterthought}
+	# if -f apt-mark showauto to get the intiial build
 	if [[ ${verbose} == "true" ]];then
 		echo raspbian processing path in verbose mode
 		showinstallednonauto | tee ${afterthougt}
