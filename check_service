@@ -13,7 +13,8 @@ fi
 
 case $1 in
 tidy)	rm /tmp/cs*; exit ; ;;
-help)	echo ${USAGE}; exit ; ;;
+-h|-?|help|--help)	:
+	echo ${USAGE}; exit ; ;;
 esac
 
 LOG=/tmp/cs$$
@@ -22,7 +23,7 @@ flag=$1
 
 case $flag in
 on)	    cat $LOG | grep '+' ; ;;
-off)    cat $LOG | grep '-' ; ;;
+off)    cat $LOG | grep '- ]' ; ;;
 all)	cat $LOG ; ;;
 *)	    if [ `cat ${LOG} | wc -l` != '0' ]
         then
