@@ -1,0 +1,25 @@
+#!/usr/bin/wish
+
+# setcolor, from Ousterhout
+# a wish script
+
+wm  title . "Set Colour"
+
+listbox .colors -width 30  -height 30
+
+button  .dismiss -text " Dismiss " -command exit -width 26
+pack .colors
+pack .dismiss
+
+set f [open /usr/local/etc/rgb.txt]
+while {[ gets $f line ] >= 0 } {
+	.colors insert end [lrange $line 3 end]
+}
+close $f
+bind .colors <Double-Button-1> {
+	.colors configure -background [selection get]
+}
+proc exit {} {
+	destroy . 
+}
+
