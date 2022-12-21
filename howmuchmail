@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# this program counts the number of messages in the mailboxes in $MAILDIR
+
+VER=1.1
+
+# must be superuser
+if [ `whoami` != 'root' ];then
+  echo must be superuser ; exit 1
+fi
+
+MAILDIR=/var/mail
+
+for i in ${MAILDIR}/*
+do
+  messages=$(grep Message-Id $i | uniq | wc -l)
+  case $messages in
+  0)  S="" ; ;;
+  *)  S=s  ; ;;
+  esac
+  echo mailbox $i ${messages} " message${S}"
+done
