@@ -11,7 +11,7 @@ if { [file size /usr/local/etc/messages.txt] == 0 } {
 #
 # Author :  DFL
 
-# Version : 3.0
+# Version : 3.1  Date : 1/1/2023
 # Date :    May 2021
 # Licence : Creative Commons BY-SA
 
@@ -34,10 +34,11 @@ wm iconname . {smsg}
 
 wm geometry . +1550+200
 
-frame .top
-frame .top.margin
-frame .top.motd
-frame .bottom
+frame .c
+frame .c.top
+frame .c.top.margin
+frame .c.top.motd
+frame .c.bottom
 
 # take the command argument list an put it in the messages
 
@@ -59,26 +60,26 @@ lappend messagelist ""
 
 set buttontext "  OK  "
 
-# make sure its there
-
 # tklibrbary is at /usr/share/tcltk/tk8.6/images
+#   make sure its there
+#image create photo infopic -file [file join $tk_library images i.gif]
 
-image create photo infopic -file [file join $tk_library images i.gif]
-label .top.margin.icon  -image infopic
+image create photo infopic -file [file join /usr local icons info.gif]
+label .c.top.margin.icon  -image infopic
 
 # the use of .f below, allows the easy integration of 
 # multiple objects into the content pane
 
-frame .top.motd.f -width 75
+frame .c.top.motd.f -width 75
 
 # this now needs to go into a loop and a list
 
-#label .top.motd.f.mess -text $messagetext
+#label .c.top.motd.f.mess -text $messagetext
 
 # the lines need a packing name
 
 set i 0
-set stem ".top.motd.f.mess"
+set stem ".c.top.motd.f.mess"
 
 foreach message $messagelist {
     label $stem$i -anchor w  -text $message
@@ -86,16 +87,19 @@ foreach message $messagelist {
     incr i 1
 }
 
-button .bottom.dismiss -text $buttontext -command "exit"
+button .c.bottom.dismiss -text $buttontext -command "exit"
 
 # the messages have been packed into .top.motd.f in the loop
 
-pack   .top.margin.icon
-pack   .top.motd.f -padx 8
+pack   .c.top.margin.icon 
+pack   .c.top.motd.f -padx 8
 
-pack   .bottom.dismiss
-pack   .top.margin .top.motd -side left
-pack   .top .bottom
+pack   .c.bottom.dismiss
+pack   .c.top.margin .c.top.motd -side left
+pack   .c.top .c.bottom
+
+pack   .c -padx 8 -pady 8
+
 
 proc exit {} {
     destroy .
