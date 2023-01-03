@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# This has not been tested
+
+# I originally  symlinked the folder to $HOME/imbin
+
+# alternatively use another test, where am i etc
+
+CONVERT=$HOME/imbin/convert.exe 
+[ -x $CONVERT ] && echo $CONVERT is executable
+
+# these should be arguments
+
+ifmt=png
+ofmt=gif
+
+cd im 
+for i in `ls *.${ifmt}` 
+do 
+    echo -n processing ${i%.${ifmt}} 
+    ${CONVERT} $i ${i%.png}.${ofmt} 
+    echo … done 
+done
