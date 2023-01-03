@@ -2,7 +2,8 @@
 
 # This has not been tested
 
-# I originally  symlinked the folder to $HOME/imbin
+# I originally  symlinked the folder to $HOME/imbin to ensure that if 
+# there are two programs with the same name we get the right program.
 
 # alternatively use another test, where am i etc
 
