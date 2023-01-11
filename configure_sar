@@ -1,0 +1,12 @@
+#!/bin/bash
+
+
+# needs to be root
+
+for program in sysstat sysstat-collect.timer sysstat-summary.timer
+do
+	for action in enable start
+	do
+		systemctl $action $program
+	done
+done
