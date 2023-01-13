@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# untested
+
+case $1 in 
+install) apt-get install deluge deluged deluge-web deluge-console ; ;;
+remove)  apt-get remove  deluge deluged deluge-web deluge-console ; ;;
+*) 	 needs \$1 set to install or remove ; ;;
+esac
+
