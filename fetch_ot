@@ -1,0 +1,32 @@
+#!/bin/bash
+
+USAGE="$0 [install|remove]"
+
+HERE=`pwd`
+
+case $1 in
+install) :
+	cvs -d :pserver:cvs@cvs.fefe.de:/cvs -z9 co libowfat
+	cd libowfat ; make
+	sudo apt-get install zlib1g-dev
+	cd ..
+	git clone git://erdgeist.org/opentracker
+	cd opentracker; make
+	cd $HERE
+	echo opentracker is at ../opentracker/opentracker
+	echo sudo cp ../opentracker/opentracker /usr/local/bin
+	;;
+remove)	:
+	echo this code is not yet ready
+	if [ -d libowfat ];then
+		echo libowfat has been found within ${HERE}
+	fi
+	echo rm -rf libowfat opentracker
+	echo sudo rm /usr/local/bin/opentracker
+	;;
+*)	echo ${USAGE}
+	;;
+esac
+
+echo $USAGE
+

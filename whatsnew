@@ -5,13 +5,10 @@
 # heavily tidied up in Augiust 2019 to make the code easier to grok.
 # and amended Nov 2022 on ubuntu
 
-# V1.8 amended the manifest checkpoint for Raspbian Desktop to use
-#      dpkg
-
-PVER=1.8 ; echo $0 ${PVER}
+PVER=1.7 ; echo $0 ${PVER}
 pname=$0
 usage="$0  -ivfspc | -h"
-# set -x
+#set -x
 
 ETCDIR=/opt/etc 	# this is a a standard
 
@@ -89,47 +86,17 @@ conffile=${ETCDIR}/whatsnew.conf
 ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
 WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
 
-# the var oninstall holds the original manifest list, the way it
-# is created is currently build dependent utilising either dpkg or gunzio
-oninstall=${WORKDIR}/oninstall.1word
+#packagemanifest= this need a constant name
+oninstall=${WORKDIR}/oninstall.1word ;# this is the working copy, if the package manifest exists, then it should be created by cat, else by gunzip
 foundpkgs=${WORKDIR}/found.1word
 afterthought=${WORKDIR}/afterthought.lis
 
 #=====================================================================
 
 verbose=false
+verbose=/bin/false
 
 # I need a install, verbose, clean, help and show switch
-
-#  -i there is an install leg,  it checks the file systems structures, 
-# and creates the configuration file which specifies the working 
-# folder and other parameters, it creates a key value database to
-# match release names with Linux classes. 
-
-# -m was meant to be a manifest retrieval. This may be superceded as
-#    dpkg and/or the manifest is installed with the OS image. There
-# is not code to make this work.
-
-# -v sets the verbose switch, the code to make this do something
-#    has not been implemented; this option will also cause the 
-# afterthoughts file to be refreshed and displayed.
-
-# -f creates the install catalog, this is OS dependent. The Ubuntu
-#    and Raspbian legs have not been tested. The final push to the 
-# working directory HAS NOT been implemented. 
-
-# -c removes the three data files from the working directory
-
-# -p removes the working directory and the .conf file.
-
-# -s lists out the most recent afterthoughs file, i.e. all those
-#    packages installed after the manifest copy was created.
-
-# Anyother switch causes the usage message to be displayed
-
-# Running witout switched causes the program to refresh the and
-# display the afterthoughs file, containf a list of packages 
-# currently installed but not installed in the orginal manifest.
 
 echo all arguments = $*
 
@@ -161,7 +128,6 @@ do
 			# from a folder with a whatsnew.db
 			cp ./whatsnew.db ${WORKDIR}
 		fi
-		# needs a mk working direcotry
 		exit
 		;;
 	-m|m)	# forces a manifest retrieve
@@ -175,32 +141,12 @@ do
 		echo OS is $(distroname -1) 
 		;;
 	-f|f)	# create the install catalog
-		# ${WORKDIR}/oninstall.1word ;# this is the working copy, if the package manifest exists, 
-		# remeber oninstall=${WORKDIR}/oninstall.1word 
-		OS_VERSION=$(cat /etc/*release | egrep "^ID" | cut -f2 -d"=")
-		echo $OS_VERSION
-		if  [[ $(arch) -eq 'x86_64' ]];then
-			case ${OS_VERSION} in
-			debian)	: # the debian leg 
-				echo this is a debian buld on x86_64 chip
-				dpkg --list | egrep "^ii"  | cut -f3 -d" " | sort -u  > ${WORKDIR}/manifest.bydpkg
-				;;
-			ubuntu) : #if Ubuntu
-				(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u) > ${WORKDIR}/manifest.dayone
-				ls -l $WORKDIR/manifest.dayone
-				# copy manifest to oninstall.1word
-				;;
-			esac
-#		else
-			# not x64 almost ceratinly ARM
-			# to be written
-		fi
-		#if [ ! -f ${onsinstall} ];then
-		echo first run ends, manifest created. 
+		#if Ubuntu
+		(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u) > ${WORKDIR}/manifest.dayone
+		ls -l $WORKDIR/manifest.dayone
 		exit
 		;;
 	-c|c)	# this is the clean files leg
-		# an are you sure wouldbe good
 		cleanresults=true
 		# move the variable settings to before the test
 		# rm ${remotemanifest} take from the conffile and reset the conffile
@@ -254,8 +200,7 @@ esac
 	
 oninstall=${WORKDIR}/oninstall.1word
 if [ ! -r ${oninstall} ];then
-	echo $oninstall must exit, run whatsnew -f
-	exit 1
+	touch $oninstall
 fi
 foundpkgs=${WORKDIR}/found.1word
 if [ ! -r ${foundpkgs} ];then
@@ -280,17 +225,16 @@ elementary) :
 	showinstallednonauto | tee ${afterthought}
 	;;
 ubuntu|Ubuntu) :
-	[verbose] && echo ubuntu processing path
+	[ verbose ] && echo ubuntu processing path
 	# we no longer get the manifest for Ubuntu
 	# showinstallednonauto
 	# the initial status file is not available on all systems; see https://github.com/termux/termux-packages/issues/674
 	comm -23 <(apt-mark showmanual | sort -u) <(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u) | tee ${afterthought}
-	[verbose] && (cat ${afterthough})
+	[ verbose ] && (cat ${afterthought})
 	exit
 	;;
 raspbian|Raspbian) :
 	echo afterthoughts file = ${afterthought}
-	# if -f apt-mark showauto to get the intiial build
 	if [[ ${verbose} == "true" ]];then
 		echo raspbian processing path in verbose mode
 		showinstallednonauto | tee ${afterthougt}
@@ -300,12 +244,6 @@ raspbian|Raspbian) :
 		showinstallednonauto | echo  > ${afterthougt} 2>1 
 	fi
 	exit
-	;;
-Debian) # This is a proxy test for bullseye
-	echo afterthoughts file = ${afterthought}
-	dpkg --list | egrep "^ii" | cut -f3 -d" " | sort -u > /${foundpkgs}
-	echo New Packages since D3 
-	comm -23 $foundpkgs $oninstall | tee ${afterthoughts}
 	;;
 *)	# other case
 	if [[ ${verbose} == true ]];then
@@ -325,9 +263,6 @@ exit
 # comm -23 ${foundpkgs} ${oninstall} > ${afterthought}
 
 # a verbose switch to display the after thoughts  file
-
-# maybe make this a function so it can be called from the main process 
-# abd tge show path.
 
 lines=$( wc -l ${afterthought} | awk '{ print $1 }')
 echo There are $lines  lines in the "afterthoughts" file
