@@ -3,6 +3,7 @@
 # Author Dave Levy	Date 30 Aug 2016 	Version 1.2
 
 # 			12 Nov 2022		Version: 1.3
+#			14 Jan 2022		Version: 1.4
 
 # obtains the ip address of a given ethernet device, via menu or from the cli
 # the ip address is echoed via stdout
@@ -21,7 +22,7 @@
 
 
 ERROR="Error in command line arguments"
-USAGE="$(basename $0) [ -h | -m | -d | -b device ]"
+USAGE="$(basename $0) [ -h | -m | -q | -d | -b device ]"
 
 debug=/bin/false
 debugecho()
