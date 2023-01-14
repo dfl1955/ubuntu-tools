@@ -1,6 +1,8 @@
 #!/bin/bash
 
-USAGE="$0 [install|remove]"
+# This makes source code folders under where you are
+
+USAGE="$0 [install|remove|makeenv]"
 
 HERE=`pwd`
 
@@ -24,9 +26,14 @@ remove)	:
 	echo rm -rf libowfat opentracker
 	echo sudo rm /usr/local/bin/opentracker
 	;;
-*)	echo ${USAGE}
+makeenv) :
+	sudo bash << EOF
+	mkdir /opt/opentracker
+	mkdir /opt/opentracker/bin
+	mkdir /opt/opentracker/log
+	mkdir /opt/opentracker/etc
+EOF
 	;;
 esac
 
-echo $USAGE
-
+cd $HERE
