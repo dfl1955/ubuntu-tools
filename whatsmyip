@@ -29,8 +29,9 @@ debugecho()
 	[ ${debug} ] && echo $*
 }
 
+PERSISTANCE="/usr/local/etc/.myip"
 
-while getopts "hmdb:" arg
+while getopts "hmqdb:" arg
 do
 case $arg in
 m)	devices=$(ifconfig -a -s | cut -f1 -d" ")
@@ -52,6 +53,10 @@ m)	devices=$(ifconfig -a -s | cut -f1 -d" ")
 	done
 	echo $PORTNAME set in menu mode
 	;;
+q)	: # quick mode
+	[ -f ${PERSISTANCE} ] && cat ${PERSISTANCE}
+	exit
+	;;	
 b)	PORTNAME=${OPTARG}
 	# it would be good to test that $PORTNAME actuall named an valid device
 	debugecho $PORTNAME set in batch mode reported by debug echo
@@ -72,16 +77,24 @@ done
 
 #PORTNAME=enp0s8
 #debugecho Portname rest to $PORTNAME by default code path
+#
+# write PORTNAME to a twin persistance file, so -q can report the port name
 
 # this could be parameterised a -o flag
 
-PERSISTANCE="/usr/local/etc/.myip"
+# we are going to make a new persistance file
 rm ${PERSISTANCE}
 
 # next test should be based on OS not arch. using my distroname function.
 
+OSname=`whatdistro -1`
+
 case $(arch) in
 armv7l) debugecho this is an ARM system  
+	SEARCHSTRING="inet"
+	ifconfig $PORTNAME | grep ${SEARCHSTRING} | head -1 | cut -f2 -d"t" | cut -f2 -d" " | tee ${PERSISTANCE}
+	;;
+x86_64)	echo arch = x64, assume Ubuntu 22
 	SEARCHSTRING="inet"
 	ifconfig $PORTNAME | grep ${SEARCHSTRING} | head -1 | cut -f2 -d"t" | cut -f2 -d" " | tee ${PERSISTANCE}
 	;;
@@ -94,7 +107,7 @@ esac
 # on the U20 machine
 # ifconfig $PORTNAME | grep "inet " | awk '{print $2}' > ${PERSISTANCE}
 
-# if verbose, or maybe not
-cat ${PERSISTANCE}
+# if verbose, or maybe not, is this replaced by -q
+# cat ${PERSISTANCE}
 
 
