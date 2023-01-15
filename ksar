@@ -1,0 +1,7 @@
+#!/bin/bash
+set -x
+
+LOGDIR=/opt/local/logs
+nohup java -jar /opt/java/ksar-5.2.4-b396_gf0680721-SNAPSHOT-all.jar > ${LOGDIR}/ksar.log 2>&1 &
+
+
