@@ -1,0 +1,31 @@
+#!/bin/bash
+
+usage="$0 filename"
+
+#am I root
+
+if [ -z $1 ];then
+	echo $usage ; exit 1
+fi
+
+#can I read the trackers file
+
+trackers=/usr/local/etc/trackers
+if [ ! -r $trackers ];then
+	echo can\'t read $trackers ; exit 1
+fi
+
+# can I execute the program
+program=/usr/bin/transmission-create
+if [ ! -x ${program} ];then
+	echo no execution rights on $program; exit 1
+fi
+
+
+# does the filename exist
+
+CWD=$(pwd)
+echo CWD = $CWD 
+echo $program  $1 $(head -1 /usr/local/etc/trackers)
+
+
