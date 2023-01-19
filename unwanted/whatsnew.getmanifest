@@ -1,0 +1,215 @@
+#!/bin/bash
+
+PVER=1.1
+
+# This was forked from whatsnew and is desinged to support whatsnew instances
+# that choose to or must use the OS manifest as the source for whats was 
+# installed.
+
+# It is not available for elementary and will use specific scripts to 'get' the
+# manifests. 
+
+#=====================================================================
+
+# This program analyses the OS and looks up a retrieval program to 'get'
+# a manifest file. The OS/program map i held in a file. It uses the whatsnew
+# conffile.
+
+# It declares functions, analyses the switches. checks that it has
+# the privileges and resources it requires and then performs its work
+
+#=====================================================================
+#
+# functions
+
+. ./dfl1955_functions
+
+mkwd()
+{
+	# makes a 777 folder
+	mkdir -p  $1
+	chmod -R 777 ${1}
+
+# maybe put this in a loop use $* move it to the functions file
+}
+
+# difverbose() ; # display if verbose
+
+switchmanifestmode()
+{
+	# switchmanifestmode on|off conffile manifest_filename 
+case $1 in
+on)	sed s/manifest=false/manifest=true/ $2 
+	sed s/manifest_name=/manifest_name=/ $2
+	;;
+off)	sed s/manifest=true/manifest=false/ $2 
+	sed s/manifest_name=/\#manifest_name=${3}/ $2
+	;;
+*)	echo Error in switchmanifestmode \$1 not true or false
+	exit 5
+	;;
+esac
+}
+
+case `whoami` in
+root) 	:; ;;
+*)	superuser=false; echo I am not root; exit -1; ;;
+esac
+
+# set's the working directory
+
+# this would be cool if could vary this as a parameter to the install mode code
+
+conffile=/opt/etc/whatsnew.conf
+if [ ! -f ${conffile} ];then
+	echo conf file $conffile not found; exit 2
+fi
+ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
+WORKDIR=${ROOTDIR}$(grep WORKING ${conffile} | cut -f2 -d"=" )
+
+case $( [[ -d ${WORKDIR} ]]) in
+true)	resultsdir=true; ;;
+false)	resultsdir=false ; echo $WORKDIR does not exist, you must run whatsnew -i ; exit 5 ; ;;
+esac
+
+#oninstall=${WORKDIR}/oninstall.1word
+#foundpkgs=${WORKDIR}/found.1word
+#afterthought=${WORKDIR}/afterthought.lis
+
+# this program requires curl, I could use apt-cache policy to make the check,
+# but I chose to use 'which'. curl is not now mandatory
+
+if [ $( which curl | wc -l ) -eq 0 ];then
+	echo curl is not installed, please install it
+	exit 3
+fi
+
+#=====================================================================
+
+pname=$0
+usage="$0  -ivshc "
+verbose=false
+
+# I need a install, verbose, clean, help and show switch
+
+
+case $1 in
+on)	:
+	# get a manifest
+	OS_NAME=$( distroname -1 )
+	OS_VER=
+	manifestfinder=$(grep ${OS_NAME} $WORKDIR/whatsnew.db | cut -f3 )
+	echo $manifestfinder
+	if [ $manifestfinder == "none" ];then
+		echo Manifest Mode is not available for $OS_NAME
+		exit 
+	else
+		:
+		# get manifest $OS_NAME $VER
+		# turn manifest on
+	fi
+	;;
+off)	:
+	# turn manifest off
+	switchmanifestmode off $(conffile) 
+	# I could delete the manifest file
+	;;
+esac
+
+exit
+
+#while getopts ivshmc opt
+#do
+# case $opt in
+
+# i.e. not s && i
+
+#=====================================================================
+#
+# This code assume ubuntu or more accuralty is known not to work with
+# on the raspberry pi. It is used to derive the manifest file location
+
+# VNAME=$( cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq )
+VNAME=$( listfiles | grep CODENAME | cut -f2 -d'=' | uniq )
+# this now includes a directory on elementary
+#VER=$( cat /etc/*release | grep RELEASE | cut -f2 -d'=' | uniq )
+VER=$( listfiles | grep RELEASE | cut -f2 -d'=' | uniq )
+
+#=====================================================================
+
+# a couple more tests, are they needed
+
+ 
+#=====================================================================
+# what am i, these lines will vary depending on what it runs on, they work
+# for ubuntu & elementary
+
+
+case `distroname - ` in 
+elementary) : 
+	if [[ ${verbose} == true ]];then
+		# this isn't working properly
+		echo elementary processing path
+	fi
+	showinstallednonauto
+	exit 10
+	;;
+ubuntu) :
+	[verbose] && echo ubuntu processing path
+	VNAME=$( listfiles | grep CODENAME | cut -f2 -d'=' | uniq )
+	VER=$( listfiles | grep RELEASE | cut -f2 -d'=' | uniq )
+	remotemanifestname=ubuntu-${VER}-desktop-amd64.manifest
+	fullremotename=http://releases.ubuntu.com/${VNAME}/${remotemanifestname}
+	remotemanifest=${WORKDIR}/ubuntu-${VER}-desktop-amd64.manifest
+	;;
+raspbian|Raspbian) :
+	if [[ ${verbose} == true ]];then
+		# this isn't working properly
+		echo raspbian processing path
+	fi
+	showinstallednonauto
+	exit 10
+	;;
+*)	# other case
+	if [[ ${verbose} == true ]];then
+		echo raspbian processing path
+	fi
+	exit 10
+	;;
+esac
+
+exit	
+#=====================================================================
+# main process path
+
+get_remotemanifest()
+{
+# 	written for ubuntu; and only needed once; it should be part of
+#	the ubuntu installation leg; another reason for a staus file in ./etc
+# 	get_remotemanifest $remotemanifest $fullremotename $oninstall
+	if [ $( which curl | wc -l ) -eq 0 ];then
+		echo curl is not installed, please install it
+		exit 3
+	fi
+	curl -o ${1} -O $2 2>/dev/null
+	cut -f1 ${1} | sort > ${3}
+}
+ 
+get_remotemanifest $remotemanifest $fullremotename $oninstall
+# what have we got?
+dpkg --get-selections | awk '$2 ~ /^(install|hold)/ { print $1 }' | sort > ${foundpkgs} 
+
+comm -23 ${foundpkgs} ${oninstall} > ${afterthought}
+
+# a verbose switch to display the after thoughts  file
+
+lines=$( wc -l ${afterthought} | awk '{ print $1 }')
+echo There are $lines  lines in the "afterthoughts" file
+
+if [ $verbose == true ];then
+	cat ${afterthought}
+else
+	echo The afterthoughts file is called ${afterthought}
+fi
+
+# cat /etc/*release | grep CODENAME | cut -f2 -d'=' | uniq 
