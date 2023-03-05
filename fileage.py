@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-import os, time
+import sys, os, time
 
-# this next line needs to be changed to take an argument
-file="~/test.txt"
+# first argument must be  a file, not tests performed.
+file=str(sys.argv[1])
 secsday=86400
 
 st=os.stat(file)
