@@ -4,6 +4,8 @@
 
 USAGE="$( basename $0 ) [ -p packagenane -v version ] | -h "
 
+# may need declare -A
+
 declare -a package
 package[0]=webmcp
 package[1]=moonbridge
