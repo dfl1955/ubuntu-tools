@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# writes a message to a specified log file
+
+# $1 is the target file
+# $2 is the calling program, can be $0 when being called by a script
+
+# these could be put on flags together with a severity indicator
+
+outputfile=$1   ; shift
+if [ ! -w $outputfile ];then
+        echo $outputfile is not writeable
+        exit 1
+fi
+program_name=$2 ; shift
+tstamp=$(date +%c)
+
+echo $tstamp $program_name $* >> $outputfile
+exit 0
