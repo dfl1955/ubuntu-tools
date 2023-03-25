@@ -1,0 +1,10 @@
+#!/bin/bash
+
+VER=1.0
+
+H=$(pwd); echo I am at $H
+
+find .  -type f -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn
+
+find .  -type f -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn | \
+        awk '{ sum+=$1} END {print sum}'
