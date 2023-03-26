@@ -1,47 +1,164 @@
 #!/bin/bash
 
-# Author: DFL  Date: 6/3/2023
+# Author: DFL  Date: 6/3/2023  Ver: 2.0
 
 # written for W3 total cache, my standards and file locations are hard coded
 # it uses my fileage.py program
 
+# this needs to be tested for remove old
+# this coulddo with % taking a parameter
+
+echo $0 ... starts
+
+USAGE="$0 [ -r | -f | -h ] \n \n
+
+    -r      removes a % of the directories, first in first out  \n
+    -f      removes all sub-direcoris from the two wordpress cahces.  \n
+    -h      this message  \n \n
+    default is all older than 1 day \n"
+
 H=`pwd`
-tooold()
+
+# now I have code to delete all, delete the oldest x% or delete all older
+# then 1 day
+
+smsg()
 {
-	# this doesn't work in a find statement
-	r=$(~/bin/fileage.py $1)
-	echo $1 $r
+ echo $*
 }
-# test threshold 500 Mb
-threshold=524288000
 
-# this would better with an asssociative array
+rm_all()
+{
+    dir=$1
+    name=$( basename ${dir} )
+    size=$(du -s  ${dir}); size=$(echo $size | cut -f1 -d" ")
+    echo purging sub directory $name is $size bytes
+    cd ${dir}
+    #echo this this the rm statement; echo rm ${dir}
+    rm -rf *
+    echo all subdirectories deleted
+    size=$(du -s  ${dir}) ; size=$(echo $size | cut -f1 -d" ")
+    f=$( ls ${dir} | wc -l )
+    echo $name is now $size bytes, with ${f} folders
+}
 
-for i in ~/next/wp-content/cache/page_enhanced/davelevy.info ~/next/wiki/wp-content/cache/page_enhanced/davelevy.info/wiki
+trimcache()
+{
+    # deletes a % of folders
+    p=25 # pct to go
+    dir=$1 ; name=$( basename ${dir} )
+    echo weeding cache $dir \%togo $p
+    notogo=$(ls ${dir} | wc -l) ; notogo=$( expr ${notogo} \* ${p} / 100 )
+    echo deleteing $notogo folders from ${name} cache
+    togo=$( ls -t $dir | tail -$notogo )
+    cd ${dir}
+    rm -rf ${togo}
+}
+
+rm_dayold()
+{
+    dir=$1
+    cd $dir; pwd
+    echo  ... finding old cache folders in ${dir}
+    for b in *
+    do
+        age=$(~/bin/fileage.py $b | cut -f4 -d" " )
+        age=$(echo $age | cut -f2 -d" ")
+        if [ $age -gt 0 ];then
+            # echo $b $age
+            rm -rf $b
+        fi
+    done
+}
+
+basedir=$HOME/next
+subdir=cache/page_enhanced/davelevy.info
+objdir=cache/object
+
+declare -A folder
+folder[blog]=${basedir}/wp-content/${subdir}/
+folder[wiki]=${basedir}/wiki/wp-content/${subdir}/wiki/
+
+declare -A objectcache
+objectcache[blog]=${basedir}/wp-content/${objdir}
+
+declare -A shortname
+shortname[blog]="davelevy.info"
+shortname[wiki]="davelevy.info/wiki"
+
+while getopts rfh opt
 do
-	echo $i
-  # first is the directory too big
-	size=$(du -s  $i)
-	size=$(echo $size | cut -f1 -d" ")
-	if [ $size -gt $threshold ];then
-		echo size is $size, more than threshold
-		cd $i; pwd
-		rm -rf *
-		du -h -d 1
-		continue
-	fi
-  # second delete directories over 1 day old
-	cd $i; pwd
-	for b in *
-	do
-		age=$(~/bin/fileage.py $b | cut -f4 -d" " )
-		age=$(echo $age | cut -f2 -d" ")
-		if [ $age -gt 0 ];then
-			echo $b $age
-			rm -rf $b
-		fi
-	done
-	du -h -s
+case $opt in
+-r|r)   #reduce
+    echo reduce by \% leg
+    for k in blog wiki
+    do
+        echo $k
+        #echo ${folder[${k}]}
+        totfolders=$( ls  ${folder[${k}]} | wc -l)
+        echo ${folder[${k}]} contains $totfolders folders
+        # this seems to work quite nicely, 25% of the oldest folders deleted
+        trimcache ${folder[${k}]} 10
+        totfolders=$( ls  ${folder[${k}]} | wc -l)
+        echo ${folder[${k}]} contains $totfolders folders
+    done
+    echo $0 - reduction mode ... ends
+    exit
+    ;;
+-f|f) #force all
+    echo remove all sub folders in the caches
+    # needs testing
+    for k in blog wiki
+    do
+        echo processing for key = $k
+        fname=${shortname[${k}]}
+        echo ${fname} contains $(ls ${folder[${k}]} | wc -l) folders
+        rm_all ${folder[${k}]}
+        if [[ $k == 'blog' ]];then
+            echo object cache is  ${objectcache[${k}]}
+            rm_all ${objectcache[${k}]}
+        fi
+    done
+    exit
+    ;;
+-h|h) #help
+    echo -e $USAGE
+    exit
+    ;;
+*)  # all those over 1 day old
+    echo deleting those folders in the cache over 1 day old
+    for k in blog wiki
+    do
+        echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
+        rm_dayold ${folder[$k]}
+        echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
+        if [[ $k == 'blog' ]];then
+            echo object cache is  ${objectcache[${k}]}
+            rm_dayold ${objectcache[${k}]}
+        fi
+    done
+    exit
+    ;;
+esac
 done
+
+# default leg
+
+echo deleting those folders in the cache over 1 day old
+for k in blog wiki
+do
+    echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
+    rm_dayold ${folder[$k]}
+    echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
+    if [[ $k == 'blog' ]];then
+        echo object cache is  ${objectcache[${k}]}
+        rm_dayold ${objectcache[${k}]}
+    fi
+done
+
+#smsg this has been sent via the smsg function
+
 cd $H
-	
+
+echo $0 ... ends
+
