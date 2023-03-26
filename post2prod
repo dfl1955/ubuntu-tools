@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# must be root
+
+if [ $(whoami) != 'root' ];then
+	echo must be root
+	exit 1
+fi
+if [ -z $1 ];then
+	echo must name tar file
+	exit 1
+fi
+
+if [  ! -r $1 ];then
+	echo $1 can\'t be found
+	exit 1
+fi
+
+exit
+
+SWD=$(pwd)
+sourcefile=$1
+targetdir=/var/www/html/
+
+echo copying $1 to $target
+
+cp $1 ${target}
+echo done
+
+notwanted="blog css de en es fonts home img index.html index.xml js projects series sitemap.xml styles tags"
+
+for o in ${notwanted}
+do
+	echo ${target}${o}
+	# rm  ${target}${o} ; this can be done as one statment
+done
+
+# now untar and do permissions
+
+cd $target
+tar xvf $1
+chown -R root:root *
+# check the next statement
+find . -type f -exec chmod 644 {}\; 
+find . -type d -exec chmod 755 {}\; #  I think
+
+cd $SWD
