@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# Author: DFL  Date: 6/3/2023
+# ver 1.1
+
+# written for W3 total cache, my standards and file locations are hard coded
+# it uses my fileage.py program
+
+H=`pwd`
+tooold()
+{
+	# this doesn't work in a find statement
+	r=$(~/bin/fileage.py $1)
+	echo $1 $r
+}
+# test threshold 500 Mb
+threshold=524288000
+
+# this would better with an asssociative array
+
+for i in ~/next/wp-content/cache/page_enhanced/davelevy.info ~/next/wiki/wp-content/cache/page_enhanced/davelevy.info/wiki
+do
+	echo $i
+  # first is the directory too big
+	size=$(du -s  $i)
+	size=$(echo $size | cut -f1 -d" ")
+	if [ $size -gt $threshold ];then
+		echo size is $size, more than threshold
+		cd $i; pwd
+		rm -rf *
+		du -h -d 1
+		continue
+	fi
+  # second delete directories over 1 day old
+	cd $i; pwd
+	for b in *
+	do
+		age=$(~/bin/fileage.py $b | cut -f4 -d" " )
+		age=$(echo $age | cut -f2 -d" ")
+		if [ $age -gt 0 ];then
+			echo $b $age
+			rm -rf $b
+		fi
+	done
+	du -h -s
+done
+cd $H
+	
