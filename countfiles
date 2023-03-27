@@ -1,12 +1,30 @@
 #!/bin/bash
 
-VER=1.0
+VER=1.1
 
-H=$(pwd); echo I am at $H
+# usage need some switches or do I
+#
+# quota -v gets accurate results
 
-# I should use quota -v
+location=${HOME}
+H=$(pwd)
+# echo I am at $H
 
-find .  -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn
+# files only by directory
+# find .  -type f -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn
 
-find .  -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn | \
-        awk '{ sum+=$1} END {print sum}'
+# sum of files only by directory
+# find .  -type f -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn | awk '{ sum+=$1} END {print sum}'
+
+# no type param, by folder name
+# find .   -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn
+
+# no type parameter, sums results
+
+filesinuse=$(find ${location} -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn | awk '{ sum+=$1} END {print sum}')
+maxfiles=$(echo 262144 | numfmt --to=iec )
+prettyfiles=$( echo $filesinuse | numfmt --to=iec )
+
+# place in a switch for -h human readable
+echo folder ${location} has $prettyfiles files, the max allowed is ${maxfiles}
+echo ${filesinuse}
