@@ -4,6 +4,8 @@ VER=1.0
 
 H=$(pwd); echo I am at $H
 
+# I should use quota -v
+
 find .  -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn
 
 find .  -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn | \
