@@ -1,12 +1,15 @@
 #!/bin/bash
 
-VER=1.1
-
 # usage need some switches or do I
 #
+
 # quota -v gets accurate results
 
-location=${HOME}
+# -p pretty -b batch -q use quota if available
+
+USAGE="$0 [ -p | -b | -q ]"
+VER=1.2
+
 H=$(pwd)
 # echo I am at $H
 
@@ -20,11 +23,40 @@ H=$(pwd)
 # find .   -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn
 
 # no type parameter, sums results
-
+location=${HOME}
 filesinuse=$(find ${location} -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn | awk '{ sum+=$1} END {print sum}')
-maxfiles=$(echo 262144 | numfmt --to=iec )
-prettyfiles=$( echo $filesinuse | numfmt --to=iec )
 
-# place in a switch for -h human readable
+maxfiles=$(echo 262144 | numfmt --to=iec )
+
+while getopts pbq opt
+do
+case $opt in
+-b|b)   echo ${filesinuse}
+        exit
+        ;;
+-p|p)   prettyfiles=$( echo $filesinuse | numfmt --to=iec )
+        echo folder ${location} has $prettyfiles files, the max allowed is ${maxfile#!/bin/bash
+        exit
+        ;;
+        
+-q|q)   case $(whereis quota | cut -f2 -d":" | wc -c) in
+        1)  echo quota not found
+            exit 1
+            ;;
+        *)  quota -v
+            exit
+            ;;
+        esac
+        exit
+        ;;
+*)      echo $USAGE
+        exit
+        ;;
+esac
+done
+
+# env LC_ALL=en_US.UTF-8 printf "%'.f\n" $filesinuse
+
+# no type parameter, sums results
+
 echo folder ${location} has $prettyfiles files, the max allowed is ${maxfiles}
-echo ${filesinuse}
