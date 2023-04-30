@@ -26,6 +26,8 @@ H=$(pwd)
 location=${HOME}
 filesinuse=$(find ${location} -printf "%h\n" | cut -d/ -f-2 | sort | uniq -c | sort -rn | awk '{ sum+=$1} END {print sum}')
 
+#chatgpt suggests find /path/to/folder -type f -exec lsof {} \; | awk '{print $NF}' | sort -u | wc -l
+
 maxfiles=$(echo 262144 | numfmt --to=iec )
 
 while getopts pbq opt
