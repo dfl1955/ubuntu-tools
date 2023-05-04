@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# amiroot
+
+# think it needs a test on $#
+
+# 5269 needed for server to server
+
+if [ $1 ==  "delete" ];then
+	echo deleting rules
+
+# 5222 5223 tcp
+	iptables -D INPUT -p tcp -m tcp --dport 5222 -j ACCEPT
+	iptables -D INPUT -p tcp -m tcp --dport 5223 -j ACCEPT
+else
+	echo adding rules
+	iptables -A INPUT -p tcp -m tcp --dport 5222 -j ACCEPT
+	iptables -A INPUT -p tcp -m tcp --dport 5223 -j ACCEPT
+fi
+
+iptables -L
+
+
