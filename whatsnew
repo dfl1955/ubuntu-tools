@@ -3,9 +3,10 @@
 
 # This was heavily amended on 29th March 2019, to use apt-mark and
 # heavily tidied up in Augiust 2019 to make the code easier to grok.
-# and amended Nov 2022 on ubuntu
+# and amended Nov 2022 on ubuntu 1.8 tuned for raspbian comm used
+# inline.
 
-PVER=1.7 ; echo $0 ${PVER}
+PVER=1.8 ; echo $0 ${PVER}
 pname=$0
 usage="$0  -ivfspc | -h"
 #set -x
@@ -46,6 +47,7 @@ echo "# Parameter file for whats new
 #
 PATH=default
 SOURCEDIR=${1}
+# NB working and ouputfiles are in /opt/local, config files inc. the initial build are in /opt/etc
 ROOTDIR=/opt/local/
 WORKING+DIRECTORY=var/whatsnew
 #
@@ -241,7 +243,9 @@ raspbian|Raspbian) :
 	else
 		echo quiet leg
 		echo afterthoughts file = ${afterthought}
-		showinstallednonauto | echo  > ${afterthougt} 2>1 
+		echo initial install file = ${oninstall}
+
+		comm -23 <(apt-mark showmanual | sort -u) <(cat $oninstall | sed -n 's/^Package: //p' | sort -u) | tee ${afterthought}
 	fi
 	exit
 	;;
