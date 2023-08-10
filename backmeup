@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# this program uses tar to make a file backup of the root directory
+# it uses the --exclude flag to exclude the run time folders
+
+VER=1.0b
+
+#am i root
+
+# the decant space is hard coded 
+SERIAL=$(date +%Y%m%d)
+TARGETDIR=/media
+ARCHIVENAME=systemBUP${SERIAL}.tgz
+FULLNAME=${TARGETDIR}/${ARCHIVENAME}
+
+echo archive name is $ARCHIVENAME
+echo full archive name is $FULLNAME
+echo target dir is $TARGETDIR
+
+# does it exist
+
+# cd / ; # echo current working directory is $PWD 
+
+tar cvpzf ${FULLNAME} \
+ --exclude ${ARCHIVENAME}/backup. \
+ --exclude /dev \
+ --exclude /mnt \
+ --exclude /proc \
+ --exclude /sys \
+ --exclude /tmp \
+ --exclude /media \
+ --exclude /lost+found \
+ --exclude /run \
+ --one-file-system /
