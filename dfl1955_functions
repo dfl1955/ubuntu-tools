@@ -21,4 +21,9 @@ case $1 in
 esac
 }
 
+whenisnow()
+{
+	date "+%d-%b-%y %T"
+}
+
 
