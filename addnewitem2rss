@@ -15,6 +15,10 @@
 
 # is item.txt already in items.xml
 
+#v1.1 is tightly coupled to the name of the feed, which is linkedin
+
+feedname=linkedin
+
 four=4
 #if [ $( diff item.txt | egrep '^<' | wc -l ) != $four ];then
 	#echo "Error: diff item* ext fails"
@@ -31,7 +35,8 @@ rm items.txt
 version=$( expr `cat ctr.txt` + 1 )
 echo $version > ctr.txt
 # linkedin.rss is the name of the new and old feed
-cp linkedin.rss linkedin.rss.${version}
-cat *.xml > linkedin.rss
+cp ${feedname}.rss ${feedname}.rss.${version}
+# requires the files to be alphabetically ordered
+cat *.xml > ${feedname}.rss
 
 
