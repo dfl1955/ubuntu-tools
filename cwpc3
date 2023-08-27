@@ -5,17 +5,18 @@
 # this needs to be tested for remove old
 # this coulddo with % taking a parameter
 
-# Ver 2.1 needs a log file and log rotate
-
 VER=3.1
 
-echo $0 $VER  ... starts
+# echo $0 $VER  ... starts
 
-USAGE="$0 [ -r | -f | -h ] \n \n
+# needs to make the logrotate run
 
-    -r      removes a % of the directories, first in first out  \n
+USAGE="$0 [ -r nn | -f | -l | -q | -h ] \n \n
+
+    -r      removes a nn% of the directories, first in first out  \n
     -f      removes all sub-direcoris from the two wordpress cahces.  \n
-	-l		overrides the default log file setting	\n
+	-l		overrides the default log file setting, which will cause logrotate to fail	\n
+	-q		quiet, verbose = false
 	-h      this message  \n \n
 	default is all older than 1 day \n"
 
@@ -30,18 +31,18 @@ logrotatestatus=${HOME}/etc/logrotate.status
 logrotateconf=${HOME}/etc/cwpc-history.conf
 #[ -a $logrotatestatus ] && echo status file found
 #[ -a $logrotateconf ] && echo .conf file found
-#/usr/sbin/logrotate -s ${logrotatestatus} ${logrotateconf}
 
 smsg()
 {
+ # not used, maybe I should use it as a only if verbose
+ # [ $verbose == "true" ] && echo $*
  echo $*
 }
 
 makelogmessage()
 {
-
 	when=$(date "+%d-%b-%y %T")
-	echo $(basename $0) ${when} $*
+	echo "$(basename $0) $VER ${when} $*" | tee -a ${history}
 }
 
 rm_all()
@@ -49,24 +50,25 @@ rm_all()
 	dir=$1
 	name=$( basename ${dir} )
 	size=$(du -s  ${dir}); size=$(echo $size | cut -f1 -d" ")
-	echo purging cache $name is $size bytes
+	[ $verbose == "true" ] && echo purging cache $name is $size bytes
 	cd ${dir}
-	#echo this this the rm statement; echo rm ${dir}
+	#echo this this the rm statement; 
+	[ $verbose == "true" ] && echo rm ${dir}
 	rm -rf *
-	test verbose && echo all subdirectories deleted
+	# [ $verbose == "true" ] && echo all subdirectories deleted
 	size=$(du -s  ${dir}) ; size=$(echo $size | cut -f1 -d" ")
 	f=$( ls ${dir} | wc -l )
-	echo $name is now $size bytes, with ${f} folders
+	[ $verbose == "true" ] && echo $name is now $size bytes, with ${f} folders
 }
 
 trimcache()
 {
 	# deletes a % of folders
-	p=25 # pct to go
+	p=$2
  	dir=$1 ; name=$( basename ${dir} )
-	echo weeding cache $dir \%togo $p
+	[ $verbose == "true" ] && echo weeding cache $dir \%togo $p
 	notogo=$(ls ${dir} | wc -l) ; notogo=$( expr ${notogo} \* ${p} / 100 )
-	echo deleteing $notogo folders from ${name} cache
+	[ $verbose == "true" ] && echo deleteing $notogo folders from ${name} cache
 	togo=$( ls -t $dir | tail -$notogo )
 	cd ${dir}
 	rm -rf ${togo}
@@ -75,8 +77,11 @@ trimcache()
 rm_dayold()
 {
 	dir=$1
-	cd $dir; pwd
-	echo  ... finding old cache folders in ${dir}
+	cd $dir; 
+	if [ $verbose == "true" ];then
+		pwd
+		echo  ... finding old cache folders in ${dir}
+	fi
 	for b in *
 	do
 		age=$(~/bin/fileage.py $b | cut -f4 -d" " )
@@ -104,84 +109,96 @@ declare -A shortname
 shortname[blog]="davelevy.info"
 shortname[wiki]="davelevy.info/wiki"
 
-echo log file is ${history}
+xrule=old   # the default deletion rule
+#echo $verbose
 
-while getopts rfl:h opt
+while getopts r:fql:h opt
 do
 case $opt in
 -r|r)	#reduce
-	test verbose && echo reduce by \% leg
-	for k in blog wiki
-	do
-		echo $k
-		#echo ${folder[${k}]}
-		totfolders=$( ls  ${folder[${k}]} | wc -l)
-		echo ${folder[${k}]} contains $totfolders folders
-		# this seems to work quite nicely, 25% of the oldest folders deleted
-		trimcache ${folder[${k}]} 10
-		totfolders=$( ls  ${folder[${k}]} | wc -l)
-		echo ${folder[${k}]} contains $totfolders folders
-	done
-	echo $0 - reduction mode ... ends
-	exit
+	xrule=reduce
+	p=25
+	if [ -z "${OPTARG//[0-9]}" ]; then
+		if [ -n $OPTARG ]; then
+			p=${OPTARG}
+		fi
+	fi
 	;;
 -f|f) #force all
-	echo remove all sub folders in the caches
-	# needs testing
-	for k in blog wiki
-	do
-		echo processing for key = $k
-		fname=${shortname[${k}]}
-		echo ${fname} contains $(ls ${folder[${k}]} | wc -l) folders
-		rm_all ${folder[${k}]}
-		if [[ $k == 'blog' ]];then
-			echo object cache is  ${objectcache[${k}]}
-			rm_all ${objectcache[${k}]}
-		fi
-	done
-	exit
+	xrule=all
+	#[ $verbose == "true" ] && echo remove all sub folders in the caches
 	;;
 -l|l) history=${OPTARG}
-	echo log file set to $history
-	exit
+	;;
+-q|q)	# quiet
+	verbose=false
 	;;
 -h|h) #help
 	echo -e $USAGE
 	exit
 	;;
-*)  # all those over 1 day old
-	echo deleting those folders in the cache over 1 day old 
-	for k in blog wiki
-	do
-		echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
-		rm_dayold ${folder[$k]}
-		echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
-		if [[ $k == 'blog' ]];then
-			echo object cache is  ${objectcache[${k}]}
-			rm_dayold ${objectcache[${k}]}
-		fi
-	done
+*)  # error parameters
+	echo $(basename $0) $*, parameter argument error
 	exit
 	;;
 esac
 done
 
-# default leg
+makelogmessage "- starts in ${xrule} mode"
 
-echo deleting those folders in the cache over 1 day old 
-for k in blog wiki
-do
-	echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
-	rm_dayold ${folder[$k]}
-	echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
-	if [[ $k == 'blog' ]];then
-		echo object cache is  ${objectcache[${k}]}
-		rm_dayold ${objectcache[${k}]}
-	fi
-done
+/usr/sbin/logrotate -s ${logrotatestatus} ${logrotateconf}
+
+[ $verbose == "true" ] && echo log file is ${history}
+[ $verbose == "true" ] && echo run mode is $xrule
+
+case $xrule in
+reduce)	: 
+		[ $verbose == "true" ] && echo reducing  by ${p}\% leg
+		for k in blog wiki
+		do
+			[ $verbose == "true" ] && echo  processing $k cache
+			#echo ${folder[${k}]}
+			totfolders=$( ls  ${folder[${k}]} | wc -l)
+			[ $verbose == "true" ] && echo ${folder[${k}]} contains $totfolders folders
+			# this seems to work quite nicely, ${p} % of the oldest folders deleted
+			trimcache ${folder[${k}]} $p
+			totfolders=$( ls  ${folder[${k}]} | wc -l)
+			[ $verbose == "true" ] && echo ${folder[${k}]} contains $totfolders folders
+		done
+		makelogmessage "- -r ${p}% mode ends, ${totfolders} folders remaining"
+		;;
+all)	for k in blog wiki
+		do
+			#[ $verbose =="true" ] && echo processing $k cache
+			fname=${shortname[${k}]}
+			#[ $verbose == "true" ] && echo ${fname} contains $(ls ${folder[${k}]} | wc -l) folders
+			rm_all ${folder[${k}]}
+			if [[ $k == 'blog' ]];then
+				[ $verbose == "true" ] && echo object cache is  ${objectcache[${k}]}
+				rm_all ${objectcache[${k}]}
+			fi
+		done
+		makelogmessage "- all blog & wiki caches have been purged"
+		;;
+old)	# all folders over 1 day old
+		[ $verbose == "true" ] && echo deleting those folders in the cache over 1 day old 
+		for k in blog wiki
+		do
+			#[ $verbose == "true" ] && echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
+			rm_dayold ${folder[$k]}
+			[ $verbose == "true" ] &&  echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
+			if [[ $k == 'blog' ]];then
+				[ $verbose == "true" ] && echo object cache is  ${objectcache[${k}]}
+				rm_dayold ${objectcache[${k}]}
+			fi
+		done
+		makelogmessage "- delete old cache folders ends"
+		[ $verbose == "true" ] 
+		;;
+esac
 
 #smsg this has been sent via the smsg function
 
 cd $H
-	
-echo $0 ... ends
+
+makelogmessage " ... ends"	

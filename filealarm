@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# Ver 1.1
+VER=1.1
+
+# tests the disk store against the permitted number of file descriptors
+# and runs a weed program if there is not enough space.
+
+# it has been tuned for use on davelevy.info where there is no root privilege
+# so no logger and no /var nor /etc
+
+USAGE="$(basename $0) [ -d | -h ]"
+verbose=false # the default, see function smsg
+
+while getopts dh arg
+do
+case $arg in 
+-d|d)	# debug, more displays
+		verbose=true
+		;;
+-h|h)	echo $USAGE; exit
+		;;
+*)		echo $USAGE; exit
+		;;
+esac
+done
+
+when=$(date "+%d-%b-%y %T")
+
+smsg()
+{
+	[ $verbose == "true" ] && echo $*
+}
+
+# what is the limit
+
+t=95
+filelimit=262144
+let "c=( ${filelimit} * $t / 100)"
+filealarm=$c
+smsg limit is ${filelimit} alarm is $filealarm
+
+# how many files are in use
+
+logfile=$HOME/etc/filesinuse.dat
+filesinuse=$( cat $logfile )
+smsg files in use = $filesinuse, alarm = $filealarm
+
+# uses log rotate
+
+currentstate=${HOME}/etc/filesinuse.dat
+history=${HOME}/etc/filealarm-log.dat 
+smsg history file is ${history}
+logrotatestatus=${HOME}/etc/logrotate.status
+/usr/sbin/logrotate -s ${logrotatestatus} $HOME/etc/filealarm-log.conf
+
+# hysterises
+
+lock=${HOME}/etc/filealarm.lock
+
+makemessage()
+{
+	echo " $(basename $0) $VER $when Files in use $1, alarm threshold, $2"
+}
+
+if [ ${filesinuse} -gt ${filealarm} ]
+then
+	# Too many files, action needed
+	#
+	smsg too many files
+	# write an alarm record and an alarm record log
+	# compose message
+	message=$(makemessage $filesinuse $filealarm )
+	message="${message}, weeding the wordpress cache"
+	echo $message  >> ${history} 
+	#write an alarm record and an alarm record log
+	#
+	smsg testing for lock file  
+	set -x
+	[ ! -a ${lock} ] || touch ${lock} 
+	[ -a ${lock}] && $( $HOME/bin/cwpc3 -f -q ) ;# needs testing, and needs a log, 
+	set +x
+else
+	message=$(makemessage $filesinuse $filealarm )
+	message="${message} , no action reqd." 
+	echo $message
+	smsg we have enough space, bo further action to be taken
+	# rm the alarm log flag`
+	[ -a ${lock} ] && rm ${lock}
+fi
