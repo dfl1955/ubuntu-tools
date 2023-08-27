@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Author: Dave Levy
+# Author: Dave Levy    Version 1.1
 
 # This script uses a bunch of standing text files to insert an rss entry into 
 # an RSS file. It was intially written to create an rss file of my linkedin
