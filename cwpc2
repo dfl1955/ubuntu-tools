@@ -1,0 +1,186 @@
+#!/bin/bash
+
+# uses fileage.py
+
+# this needs to be tested for remove old
+# this coulddo with % taking a parameter
+
+# Ver 2.1 needs a log file and log rotate
+VER=2.1
+
+echo $0 $VER  ... starts
+
+USAGE="$0 [ -r | -f | -h ] \n \n
+
+    -r      removes a % of the directories, first in first out  \n
+    -f      removes all sub-direcoris from the two wordpress cahces.  \n
+	-l		overrides the default log file setting	\n
+	-h      this message  \n \n
+	default is all older than 1 day \n"
+
+H=`pwd`
+
+# now I have code to delete all, delete the oldest x% or delete all older
+# then 1 day
+
+verbose=true
+history=${HOME}/etc/cwpc-history.dat
+logrotatestatus=${HOME}/etc/logrotate.status
+logrotateconf=${HOME}/etc/cwpc-history.conf
+#[ -a $logrotatestatus ] && echo status file found
+#[ -a $logrotateconf ] && echo .conf file found
+#/usr/sbin/logrotate -s ${logrotatestatus} ${logrotateconf}
+
+smsg()
+{
+ echo $*
+}
+
+makelogmessage()
+{
+
+	when=$(date "+%d-%b-%y %T")
+	echo $(basename $0) ${when} $*
+}
+
+rm_all()
+{
+	dir=$1
+	name=$( basename ${dir} )
+	size=$(du -s  ${dir}); size=$(echo $size | cut -f1 -d" ")
+	echo purging cache $name is $size bytes
+	cd ${dir}
+	#echo this this the rm statement; echo rm ${dir}
+	rm -rf *
+	test verbose && echo all subdirectories deleted
+	size=$(du -s  ${dir}) ; size=$(echo $size | cut -f1 -d" ")
+	f=$( ls ${dir} | wc -l )
+	echo $name is now $size bytes, with ${f} folders
+}
+
+trimcache()
+{
+	# deletes a % of folders
+	p=25 # pct to go
+ 	dir=$1 ; name=$( basename ${dir} )
+	echo weeding cache $dir \%togo $p
+	notogo=$(ls ${dir} | wc -l) ; notogo=$( expr ${notogo} \* ${p} / 100 )
+	echo deleteing $notogo folders from ${name} cache
+	togo=$( ls -t $dir | tail -$notogo )
+	cd ${dir}
+	rm -rf ${togo}
+}
+
+rm_dayold()
+{
+	dir=$1
+	cd $dir; pwd
+	echo  ... finding old cache folders in ${dir}
+	for b in *
+	do
+		age=$(~/bin/fileage.py $b | cut -f4 -d" " )
+		age=$(echo $age | cut -f2 -d" ")
+		if [ $age -gt 0 ];then
+			# echo $b $age
+			rm -rf $b
+		fi
+	done
+}
+
+
+basedir=$HOME/next
+subdir=cache/page_enhanced/davelevy.info
+objdir=cache/object
+
+declare -A folder
+folder[blog]=${basedir}/wp-content/${subdir}/
+folder[wiki]=${basedir}/wiki/wp-content/${subdir}/wiki/
+
+declare -A objectcache
+objectcache[blog]=${basedir}/wp-content/${objdir}
+
+declare -A shortname
+shortname[blog]="davelevy.info"
+shortname[wiki]="davelevy.info/wiki"
+
+echo log file is ${history}
+
+while getopts rfl:h opt
+do
+case $opt in
+-r|r)	#reduce
+	test verbose && echo reduce by \% leg
+	for k in blog wiki
+	do
+		echo $k
+		#echo ${folder[${k}]}
+		totfolders=$( ls  ${folder[${k}]} | wc -l)
+		echo ${folder[${k}]} contains $totfolders folders
+		# this seems to work quite nicely, 25% of the oldest folders deleted
+		trimcache ${folder[${k}]} 10
+		totfolders=$( ls  ${folder[${k}]} | wc -l)
+		echo ${folder[${k}]} contains $totfolders folders
+	done
+	echo $0 - reduction mode ... ends
+	exit
+	;;
+-f|f) #force all
+	echo remove all sub folders in the caches
+	# needs testing
+	for k in blog wiki
+	do
+		echo processing for key = $k
+		fname=${shortname[${k}]}
+		echo ${fname} contains $(ls ${folder[${k}]} | wc -l) folders
+		rm_all ${folder[${k}]}
+		if [[ $k == 'blog' ]];then
+			echo object cache is  ${objectcache[${k}]}
+			rm_all ${objectcache[${k}]}
+		fi
+	done
+	exit
+	;;
+-l|l) history=${OPTARG}
+	echo log file set to $history
+	exit
+	;;
+-h|h) #help
+	echo -e $USAGE
+	exit
+	;;
+*)  # all those over 1 day old
+	echo deleting those folders in the cache over 1 day old 
+	for k in blog wiki
+	do
+		echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
+		rm_dayold ${folder[$k]}
+		echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
+		if [[ $k == 'blog' ]];then
+			echo object cache is  ${objectcache[${k}]}
+			rm_dayold ${objectcache[${k}]}
+		fi
+	done
+	exit
+	;;
+esac
+done
+
+# default leg
+
+echo deleting those folders in the cache over 1 day old 
+for k in blog wiki
+do
+	echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
+	rm_dayold ${folder[$k]}
+	echo ${folder[${k}]} contains $(ls ${folder[$k]} | wc -l) folders
+	if [[ $k == 'blog' ]];then
+		echo object cache is  ${objectcache[${k}]}
+		rm_dayold ${objectcache[${k}]}
+	fi
+done
+
+#smsg this has been sent via the smsg function
+
+cd $H
+	
+echo $0 ... ends
