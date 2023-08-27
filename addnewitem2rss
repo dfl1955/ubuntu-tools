@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Author: Dave Levy
+
+# This script uses a bunch of standing text files to insert an rss entry into 
+# an RSS file. It was intially written to create an rss file of my linkedin
+# pulse feed. 
+
+# In this case the output file is called linkedin.rss, it is versioned using 
+# a version counr file called ctr.txt
+
+# The new snip must be held in item.txt, a standing interim version is held in
+# items.xml. This contains the concatenated posts. They are then concatenated
+# with head.xml and tail.xml into the new feed file. 
+
+# is item.txt already in items.xml
+
+four=4
+#if [ $( diff item.txt | egrep '^<' | wc -l ) != $four ];then
+	#echo "Error: diff item* ext fails"
+	#exit 10
+#fi
+# a test on the age of item.txt would be good to.
+
+# if not, back up the rss file and merge the *.xml files into a new rss
+
+mv items.xml items.txt
+cat item.txt items.txt > items.xml
+rm items.txt
+
+version=$( expr `cat ctr.txt` + 1 )
+echo $version > ctr.txt
+# linkedin.rss is the name of the new and old feed
+cp linkedin.rss linkedin.rss.${version}
+cat *.xml > linkedin.rss
+
+
