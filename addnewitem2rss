@@ -1,13 +1,18 @@
 #!/bin/bash
 
-# Author: Dave Levy    Version 1.1
+# Author: Dave Levy   Version 1.2
+VER=1.2
 
 # This script uses a bunch of standing text files to insert an rss entry into 
 # an RSS file. It was intially written to create an rss file of my linkedin
 # pulse feed. 
 
-# In this case the output file is called linkedin.rss, it is versioned using 
-# a version counr file called ctr.txt
+# In this version,  the output file is named in feedname var, and is 
+# located in the sub folder $WDIR, the working copy is versioned using 
+# a version count file called ctr.txt. These values would be good being specified 
+# as CLI arguments. 
+
+# the final publication point is held in a file link.txt
 
 # The new snip must be held in item.txt, a standing interim version is held in
 # items.xml. This contains the concatenated posts. They are then concatenated
@@ -15,12 +20,16 @@
 
 # is item.txt already in items.xml
 
-#v1.1 is tightly coupled to the name of the feed, which is linkedin
+WDIR="./rsslog"
+CTR=${WDIR}/ctr.txt
 
-feedname=linkedin
+feedname=${WDIR}/eventlog
+puburl=$(cat ${WDIR}/link.txt)
+echo $puburl
 
-four=4
-#if [ $( diff item.txt | egrep '^<' | wc -l ) != $four ];then
+
+linelinit=5
+#if [ $( cat ${WDIR}/item.txt | egrep '^<' | wc -l ) != $four ];then
 	#echo "Error: diff item* ext fails"
 	#exit 10
 #fi
@@ -28,15 +37,15 @@ four=4
 
 # if not, back up the rss file and merge the *.xml files into a new rss
 
-mv items.xml items.txt
-cat item.txt items.txt > items.xml
-rm items.txt
+mv ${WDIR}/items.xml ${WDIR}/items.txt
+cat ${WDIR}/item.txt ${WDIR}/items.txt > ${WDIR}/items.xml
+rm ${WDIR}/items.txt
 
-version=$( expr `cat ctr.txt` + 1 )
-echo $version > ctr.txt
+version=$( expr `cat ${CTR}` + 1 )
+echo $version > ${CTR}
 # linkedin.rss is the name of the new and old feed
 cp ${feedname}.rss ${feedname}.rss.${version}
-# requires the files to be alphabetically ordered
-cat *.xml > ${feedname}.rss
+cat ${WDIR}/*.xml > ${feedname}.rss
 
+# needs a publication statement.
 
