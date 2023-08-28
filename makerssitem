@@ -1,0 +1,81 @@
+#!/usr/bin/python3
+
+# Author: Dave Levy   Version 1.1
+
+# write an rss item record
+
+import getopt
+import sys
+from datetime import datetime
+
+# input arguments name, description and outputfile name, which has not been implemented
+
+version = '1.1'
+verbose = False
+# subdirectory  and item name are hardcoded
+
+output_filename = './rsslog/item.txt'
+
+# -n name and -c comment are mandatory, if null, an error is generated
+
+try:
+    options, remainder = getopt.getopt(sys.argv[1:], 'n:c:o:v', ['name=', 'comment=', 'output=', 'verbose', 'version=', ])
+except getopt.GetoptError:
+    # Print a message or do something useful
+    print('Something went wrong!')
+    sys.exit(2)
+
+for opt, arg in options:
+    if opt in ('-n','--name'):
+        name = arg
+    elif opt in ('-c', '--comment'):
+        comment = arg
+    elif opt in ('-o', '--output'):
+        output_filename = arg
+    elif opt in ('-v', '--verbose'):
+        verbose = True
+    elif opt == '--version':
+        version = arg
+
+if verbose :
+    print ('OPTIONS   :', options)
+    print ('VERSION   :', version)
+    print ('VERBOSE   :', verbose )
+    print ('OUTPUT    :', output_filename)
+    print ('REMAINING :', remainder)
+    print ('TITLE     :', name)
+    print ('COMMENT   :', comment)
+
+
+now = datetime.now()
+TZ="+0100"
+dt_o = now.strftime("%d %b %Y %H:%M:%S %z") + TZ
+#print (dt_o)
+
+def setTZ():
+    return "+0100"
+
+def makeRFC822():
+    n=datetime.now()
+    TZ=setTZ()
+    return TZ
+
+def writearecord(name,description):
+    o="<item>\n"
+    o=o + "<TITLE>" + name + "</TITLE>\n"
+    o=o + "<DESCRIPTION>" + description + "</DESCRIPTION>\n"
+    # make the date line, called PUBDATE
+    # use strftime
+    now=datetime.now(); TZ=setTZ()
+    rfc822=now.strftime("%d %b %Y %H:%M:%S %z") + TZ
+    o=o + "<PUBDATE>" + rfc822 + "</PUBDATE>\n"
+    o=o + "</item>\n"
+    return o 
+
+desc=comment
+message=writearecord(name,desc)
+f1 = open(output_filename,'w')
+f1.write(message)
+f1.close()
+
+#print(message)
