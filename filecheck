@@ -1,0 +1,29 @@
+#/bin/bash
+
+# ver 1.4
+
+# written for davelevy.info; there is no write access to /var or /
+# copied from spacecheck
+
+# perhaps it need a leg which tests the size against a threshold
+
+# uses log rotate
+
+currentstate=${HOME}/etc/filesinuse.dat
+history=${HOME}/etc/filesinusehistory.dat
+logrotatestatus=${HOME}/etc/logrotate.status
+
+# Current state
+
+FILESINUSE=$( ${HOME}/bin/countfiles -b )
+when=$(date +%d-%b-%y_%T)
+
+echo $FILESINUSE > ${currentstate}
+
+# History file
+
+/usr/sbin/logrotate -s ${logrotatestatus} $HOME/etc/filesusedhistory.conf
+echo $FILESINUSE $when  >> ${history} 
+echo $(basename $0) $when - finishes
+
+

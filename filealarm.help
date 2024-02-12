@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Ver 1.1
+
+# contains the help statement for file alarm
+
+  -d debug, turns on stronger log messages
+  -o nn resets the threshold at which the program calls the action program, it is a % and defaults to 90%
+  -c clears the lock file
+  -h displays this message 
+
