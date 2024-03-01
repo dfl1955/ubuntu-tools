@@ -1,8 +1,3 @@
-# ubuntu-tools
-
-some basic tools for ubuntu
-
-Here is an index of the file repo, made 1/3/2024
 .
 ./local-bin
 ./local-bin/ksar
