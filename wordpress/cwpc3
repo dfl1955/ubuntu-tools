@@ -1,9 +1,11 @@
 #!/bin/bash
 
-# uses fileage.py
+# uses fileage.py which needs to be referenced via an environment variable since 
+# it currently is coded for davelevy.info where I don't have access to /usr/local/bin
+# not to /opt
 
 # this needs to be tested for remove old
-# this coulddo with % taking a parameter
+
 
 VER=3.1
 

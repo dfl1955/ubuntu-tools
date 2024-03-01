@@ -2,6 +2,8 @@
 
 # This makes source code folders under where you are
 
+# This installs opentracker, only needed if yoou want to run an index
+
 USAGE="$0 [install|remove|makeenv]"
 
 HERE=`pwd`

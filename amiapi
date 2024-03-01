@@ -7,6 +7,10 @@
 
 # test for -x arch
 
+# Ver 1.2 - test for arch = x86_64 inserted, although is this needed, this must be
+#           tested for the correct outputs i.e. linux treats 0 as ok, I think this 
+#	    replies 1 if a pi and 0 if not.
+
 TNAME="Raspbian GNU/Linux"
 
 # WNAME=`cat /etc/*release | egrep ^NAME | cut -f2 -d'='`
@@ -14,11 +18,14 @@ WID=`cat /etc/*release | egrep ^ID | cut -f2 -d'='`
 
 WARCH=`arch`
 ARMCPU=false
-
 case ${WARCH} in
 armv7l) :
         # echo arch found, class = arm
         WARCH=`arch`; ARMCPU=true
+        ;;
+x86_64)	:
+        # echo arch found, class = X64
+        WARCH=`arch`; ARMCPU=false
         ;;
 *)      echo error in the 'arch' test, probably arch not defined
         exit 2

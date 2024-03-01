@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# on elementary, notify-osd must be installed and the icons need to be in /usr/share/icons
+# on elementary, notify-osd must be installed and the icons need to be in 
+# /usr/share/icons
 
 # having a problem with notify-send on the raspbian, will I have to write a wish script?
 

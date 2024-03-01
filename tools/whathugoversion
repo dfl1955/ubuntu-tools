@@ -1,6 +1,9 @@
 #!/bin/bash
 #
 #
+echo "this program is broken, the curl statement replys with a null string."
+exit 253
+
 # This program reports if hugo needs to be updated, it also uses
 # the exit code to signify if change is required
 #
@@ -15,6 +18,10 @@ URL=$( curl -s https://api.github.com/repos/gohugoio/hugo/releases/latest \
 | head -1  \
 | cut -d : -f 2,3 \
 | tr -d  \" )
+
+# debug
+
+echo $URL
 
 remoteVersion=$(echo $URL | cut -f8 -d"/")
 localVersion=$( hugo version | cut -f5 -d" "| cut -f1 -d"-")

@@ -6,6 +6,11 @@
 # and amended Nov 2022 on ubuntu 1.8 tuned for raspbian comm used
 # inline.
 
+# it needs to be run after mk_opt and needs to be run with a -i flag before
+# it can work. The -i mode has file read dependencies that other modes do not and
+# is thus best run from the ubuntu-tools directory. (As at branch 1.2.0.0, this needs
+# to be tested.
+
 PVER=1.8 ; echo $0 ${PVER}
 pname=$0
 usage="$0  -ivfspc | -h"
@@ -47,7 +52,8 @@ echo "# Parameter file for whats new
 #
 PATH=default
 SOURCEDIR=${1}
-# NB working and ouputfiles are in /opt/local, config files inc. the initial build are in /opt/etc
+# NB working and ouputfiles are in /opt/local, config files inc. the initial build are
+# in /opt/etc
 ROOTDIR=/opt/local/
 WORKING+DIRECTORY=var/whatsnew
 #

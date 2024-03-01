@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# this is a tool for installing a hugo blog on the real pi
+
 # must be root
 
 if [ $(whoami) != 'root' ];then
