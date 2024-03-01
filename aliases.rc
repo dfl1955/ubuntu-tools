@@ -1,4 +1,6 @@
 
+alias python="python3"
+
 alias gtools="cd ~/Download/ubuntu-tools"
 alias gbin="cd /usr/local/bin"
 alias lbin="ls /usr/local/bin"
