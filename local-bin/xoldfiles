@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# written by Gemini AI
+
+# Define the directory to clean.
+# It's recommended to set this to a specific path rather than running it globally on '/'
+# For example: TARGET_DIR="/path/to/your/directory"
+# If you want to run it on the current directory where the script is executed, use:
+TARGET_DIR="." 
+
+# Confirm the target directory to avoid accidental deletion
+read -p "This script will delete files older than 2 years and all empty directories in '${TARGET_DIR}'. Are you sure you want to proceed? (y/N): " confirm
+if [[ ! "$confirm" =~ ^[yY]$ ]]; then
+    echo "Operation cancelled."
+    exit 0
+fi
+
+echo "Deleting files older than 2 years in '${TARGET_DIR}'..."
+# Find and delete files older than 2 years (730 days)
+# -type f: only files
+#
+#   two years
+#
+# -mtime +730: modification time older than 730 days (2 years)
+# -print0: prints the full file name on the standard output, followed by a null character
+# xargs -0 rm -v: reads null-separated items from standard input and executes rm -v
+# -v: verbose, shows what's being deleted
+find "$TARGET_DIR" -type f -mtime +730 -print0 | xargs -0 rm -v
+
+echo "Deleting empty directories in '${TARGET_DIR}'..."
+# Find and delete empty directories
+# -type d: only directories
+# -empty: matches empty files and directories
+# -delete: deletes the empty directory (Note: -delete is specific to GNU find)
+# This command tries to delete directories from the deepest level first, which is important
+# when a parent directory might become empty after its children are deleted.
+find "$TARGET_DIR" -type d -empty -delete -print -depth 2>/dev/null
+
+echo "Cleanup complete."
