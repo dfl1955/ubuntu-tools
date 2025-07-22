@@ -5,7 +5,7 @@
 FLAGS=""
 space=""
 
-for version in karmic lucid maverick natty oneiric precise quantal raring saucy trusty utopic vivid wily
+for version in karmic lucid maverick natty oneiric precise quantal raring saucy trusty utopic vivid wily yakkety zesty artful
 do
 	FLAGS=${FLAGS}${space}ubuntu-wallpapers-${version}
 	# this is wrong
