@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# run netsurf  DFL Ver 1.0 24/7/2025
+
+# needs flatpak & netsurf installed
+
+#sudo apt install flatpak
+#sudo apt install gnome-software-plugin-flatpak
+#sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+#sudo flatpak install flathub org.netsurf_browser.NetSurf
+
+# flatpak install flathub org.netsurf_browser.NetSurf
+
+flatpak run org.netsurf_browser.NetSurf
