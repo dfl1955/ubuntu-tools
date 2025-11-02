@@ -1,7 +1,12 @@
 #!/bin/bash
 set -x
 
+# if Raspian
+
+export DISPLAY=:10.0
 LOGDIR=/opt/local/logs
-nohup java -jar /opt/java/ksar-5.2.4-b396_gf0680721-SNAPSHOT-all.jar > ${LOGDIR}/ksar.log 2>&1 &
+
+# not sure about nohup, and ksar-latest is a link
+nohup java -jar /opt/java/ksar-latest.jar > ${LOGDIR}/ksar.log 2>&1 &
 
 
