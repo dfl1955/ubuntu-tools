@@ -1,6 +1,9 @@
 #!/bin/bash
 
-. ./dfl1955_functions
+# Ver 1_2 - revised function file reference
+
+FPATH=/usr/local/bin
+. ${FPATH}/dfl1955_functions
 
 distroname $*
 
