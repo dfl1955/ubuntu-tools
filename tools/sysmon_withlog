@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# monitor_with_alerts.sh
+
+# taken from the internet: the original used mail, this version uses logger
+
+# Ver 1.1 
+
+EMAIL="admin@example.com"  # Change this to your email
+ALERT_THRESHOLD_CPU=80
+ALERT_THRESHOLD_MEM=90
+ALERT_THRESHOLD_DISK=85
+
+send_alert() {
+    subject=$1
+    message=$2
+    #echo "$message" | mail -s "$subject" $EMAIL
+    logger -i -p user.warning "$message"
+}
+
+# Check CPU and alert
+cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1 | cut -d'.' -f1)
+if [ "$cpu_usage" -gt "$ALERT_THRESHOLD_CPU" ]; then
+    send_alert "ALERT: High CPU Usage" "CPU usage is at ${cpu_usage}% on $(hostname)"
+fi
+
+send_alert "FAKE ALERT on CPU" "Fake Alert: CPU usage is at ${cpu_usage}% on $(hostname)"
+
+# Check memory and alert
+mem_usage=$(free | grep Mem | awk '{printf("%.0f", $3/$2 * 100)}')
+if [ "$mem_usage" -gt "$ALERT_THRESHOLD_MEM" ]; then
+    send_alert "ALERT: High Memory Usage" "Memory usage is at ${mem_usage}% on $(hostname)"
+fi
+
+# Check disk and alert
+df -h | grep -E '^/dev/' | while read line; do
+    usage=$(echo $line | awk '{print $5}' | cut -d'%' -f1)
+    partition=$(echo $line | awk '{print $1}')
+    
+    if [ "$usage" -gt "$ALERT_THRESHOLD_DISK" ]; then
+        send_alert "ALERT: Low Disk Space" "Disk usage on $partition is at ${usage}% on $(hostname)"
+    fi
+done
