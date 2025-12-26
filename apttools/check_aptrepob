@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# on elementary, notify-osd must be installed and the icons need to be in 
+# /usr/share/icons
+
+# having a problem with notify-send on the raspbian, will I have to write a wish script?
+
+usage="check_aptrepo [-t|-h]"
+# are there things to get?
+
+set -x
+
+case $1 in
+-t)	apt list --upgradable ; ;;
+-h)	echo $usage ; ;;
+*)	packages=$(apt list --upgradable 2>/dev/null | wc -l)
+	if [[ $packages > 1 ]];then
+		m1='--text="Updates available, please run apt"'
+		t1='--title="Packages availale"'
+		i1='--info'
+		w1='--width=200'
+		to='--timeout=20'
+		args="'${i1}' '${t1}' '${m1}' '${w1}' '${to}'"
+            eval "zenity $args"
+	    exit 1
+	else
+	    exit
+	fi
+	;;
+esac
+	
+
