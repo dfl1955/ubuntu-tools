@@ -1,0 +1,327 @@
+#!/bin/bash
+
+
+# This was heavily amended on 29th March 2019, to use apt-mark and
+# heavily tidied up in Augiust 2019 to make the code easier to grok.
+# and amended Nov 2022 on ubuntu 1.8 tuned for raspbian comm used
+# inline.
+
+# it needs to be run after mk_opt and needs to be run with a -i flag before
+# it can work. The -i mode has file read dependencies that other modes do not and
+# is thus best run from the ubuntu-tools directory. (As at branch 1.2.0.0, this needs
+# to be tested.
+
+PVER=1.9 ; echo $0 ${PVER}
+
+# Ver 1.9 - amended for Buster aka RaspberryPi Desktop
+
+#  Standing Data, version control and file location root
+#
+pname=$0
+usage="$0  -ivfspc | -h"
+#set -x
+
+ETCDIR=/opt/etc 	# this is a a standard
+
+#=====================================================================
+
+# This program compares the installed packages with a manifest and 
+# produces a list of the newly installed packages i.e. those that I
+# have installed. It was amended for some distros to use apt-mark rather
+# then obtain the manifest and the manifest retreival was put into
+# abeyance.
+
+# It declares functions, analyses the switches. checks that it has
+# the privileges and resources it requires and then performs its work
+
+#=====================================================================
+#
+# 	F U N C T I O N S
+#
+
+if [ -r ${ETCDIR}/dfl1955_functions ]; then
+	. ${ETCDIR}/dfl1955_functions
+else
+	echo no functions file; exit 5
+fi
+
+mkwd()
+{
+	# makes a 777 folder, it is called by the intitialisation 
+	# leg/routnine
+	#
+	mkdir -p  $1 ; chmod -R 777 ${1}
+}
+
+make_wnconf()
+{
+	# make_wnconf ${directory location of whatsnew.db}
+	# This function is called by the initalisation 
+	# leg routine. It makes an external parameter file.
+	# 
+echo "# Parameter file for whats new
+#
+PATH=default
+SOURCEDIR=${1}
+# NB working and ouputfiles are in /opt/local, config files 
+# inc. the initial build are in /opt/etc
+ROOTDIR=/opt/local/
+WORKING+DIRECTORY=var/whatsnew
+#
+manifest=false
+#manifest_name=default
+"
+}
+
+showinstallednonauto()
+{
+#	showinstallednonauto
+#	the initial status file is not available on all systems 
+#	see https://github.com/termux/termux-packages/issues/674
+#
+#	as at July 25 v1.9 it is called by the elementary & raspbian legs
+# 	this needs to be put in line
+#
+	comm -23 <(apt-mark showmanual | sort -u) <(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u)
+# 	the redirects arn't working
+}
+
+#
+#	if -h requested, shows the argument string, a man page would help
+#
+if [ ! -z $1 ];then
+	if [[ $1 == "-h" ]];then
+		echo ${usage}
+		exit 0
+	fi
+fi
+
+case `whoami` in
+root) 	:; ;;
+*)	superuser=false; echo I am not root; exit -1; ;;
+esac
+
+# set's the conf file
+
+conffile=${ETCDIR}/whatsnew.conf
+
+# these have been  oved to the legs
+
+ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
+WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
+
+#packagemanifest= this need a constant name
+
+oninstall=${WORKDIR}/oninstall.1word 
+# 	this is the working copy, if the package manifest exists, 
+#	then it should be created by cat, else by gunzip
+foundpkgs=${WORKDIR}/found.1word
+afterthought=${WORKDIR}/afterthought.lis
+
+#=====================================================================
+#
+#	P R O C E S S I N G   M O D E
+#
+
+verbose=false
+verbose=/bin/false
+
+# I need a install, verbose, clean, help and show switch
+
+echo all arguments = $*
+
+while getopts ivdfspmc opt
+do
+	case ${opt} in
+	-i|i)	# this is the install leg
+		# needs to be root
+		echo $pname $(distroname) ... 
+		if [ ! -z $OPTARG ];then 
+			echo $OPTARG
+		fi
+		if [ -r ${conffile} ];then
+			echo There is a conf file at ${conffile}, this nees to be removed
+			exit 10
+		else
+		# make a conf file
+			make_wnconf $OPTARG > ${conffile}
+			ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
+			WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
+			if [ ! -d ${WORKDIR} ];then
+				echo There is no ${WORKDIR} on this system, I\'ll make you one.
+				mkwd ${WORKDIR}
+				# copy the db to the $WORKDIR
+			else
+				echo ${WORKDIR} already exists on this system
+			fi
+			# once this was configurable, whatsnew -i must be run
+			# from a folder with a whatsnew.db
+			cp ./whatsnew.db ${WORKDIR}
+		fi
+		exit
+		;;
+	-m|m)	# forces a manifest retrieve
+		echo not yet ready
+		# get it and write new conf file parameters
+		exit
+		;;
+	-v|v) 	# this is the verbose leg
+		verbose=true
+		echo $pname ... in verbose mode
+		echo OS is $(distroname -1) 
+		;;
+	-f|f)	# create the install catalog
+		# should this not be in the -i leg
+		case `distroname -1` in
+		ubuntu) : 
+		# 	if Ubuntu
+			(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u) > ${WORKDIR}/manifest.dayone
+			;;
+		buster|Debian)	:
+		#	if Debian/buster
+			apt list --installed | cut -f1 -d"/" > ${WORKDIR}/manifest.dayone
+			;;
+		*)	echo "error: I don\'t know how to process `distroname -1`"
+			exit 20
+		esac
+		ls -l $WORKDIR/manifest.dayone
+		exit
+		;;
+	-c|c)	# this is the clean files leg
+		cleanresults=true
+		# move the variable settings to before the test
+		# rm ${remotemanifest} take from the conffile and reset the conffile
+		#			parameters
+		rm ${oninstall} ${foundpkgs} ${afterthought}
+		exit
+		;;
+	-p|p)   : this removes the etc filem the contents and the direcory
+		echo purging whatsnew ...
+		# whatever
+		if [ -r ${conffile} ];then
+			ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
+			WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
+			rm -rf ${WORKDIR}; rm ${conffile}
+			echo " done"
+		else
+			echo There is no conf file in $ETCDIR
+		fi
+		exit 0
+		;;
+	-s|s)	# this is the show leg
+		echo $pname ... in verbose mode
+		# why would we do this, we always create the afterthoughts file
+		cat ${afterthought}
+		exit
+		;;
+	*)	print ${usage}
+		exit 2
+		;;
+	esac
+done
+
+#===================================================================
+#
+# This sets the file locations and is to run if a report is required.
+#
+if [ ! -r /opt/etc/whatsnew.conf ];then
+	echo you need to run an install of this tool; exit -1
+fi
+conffile=/opt/etc/whatsnew.conf
+ROOTDIR=$( grep ROOTDIR ${conffile} | cut -f2 -d"=" )
+WORKDIR=${ROOTDIR}$( grep WORKING ${conffile} | cut -f2 -d"=" )
+
+case $( [[ -d ${WORKDIR} ]]) in
+true)	resultsdir=true; ;;
+false)	resultsdir=false 
+	echo $WORKDIR does not exist, you must run whatsnew -i 
+	exit 10
+	;;
+esac
+	
+oninstall=${WORKDIR}/oninstall.1word
+if [ ! -r ${oninstall} ];then
+	touch $oninstall
+fi
+foundpkgs=${WORKDIR}/found.1word
+if [ ! -r ${foundpkgs} ];then
+	touch $foundpkgs
+fi
+afterthought=${WORKDIR}/afterthought.lis
+if [ ! -r $afterthought ];then
+	touch ${afterthought}
+fi
+
+#=====================================================================
+# 
+# 	A N A L Y Z E   B U I L D  &  R E P O R T
+
+# these lines will vary depending on what it runs on, they work
+
+# This code discovers the distro and then compares the current build with
+# the installed build using the comm command. It writes recently installed 
+# packages into the afterthoughts file and displays it on request.
+#
+# It has been tested for ubuntu and elementary
+
+case `distroname -1 ` in 
+elementary) : 
+	echo elementary
+	if [[ ${verbose} == "true" ]];then
+		# this isn't working properly; see Raspian Code
+		echo elementary processing path
+	fi
+	showinstallednonauto | tee ${afterthought}
+	;;
+ubuntu|Ubuntu) :
+	[ verbose ] && echo ubuntu processing path
+	# we no longer get the manifest for Ubuntu
+	# showinstallednonauto
+	# the initial status file is not available on all systems; see https://github.com/termux/termux-packages/issues/674
+	comm -23 <(apt-mark showmanual | sort -u) <(gzip -dc /var/log/installer/initial-status.gz | sed -n 's/^Package: //p' | sort -u) | tee ${afterthought}
+	[ verbose ] && (cat ${afterthought})
+	exit
+	;;
+raspbian|Raspbian|Debian) :
+	echo afterthoughts file = ${afterthought}
+	if [[ ${verbose} == "true" ]];then
+		echo raspbian processing path in verbose mode
+		showinstallednonauto | tee ${afterthougt}
+	else
+		echo quiet leg
+		echo afterthoughts file = ${afterthought}
+		echo initial install file = ${oninstall}
+#
+#		does this need to reference the output from the -f leg
+#
+		comm -23 <(apt-mark showmanual | sort -u) <(cat $oninstall | sed -n 's/^Package: //p' | sort -u) | tee ${afterthought}
+	fi
+	exit
+	;;
+*)	# other case
+	if [[ ${verbose} == true ]];then
+		echo raspbian processing path
+	fi
+	exit 10
+	;;
+esac
+
+exit	
+#=====================================================================
+# aftermath  process path
+
+# get_remotemanifest $remotemanifest $fullremotename $oninstall
+# what have we got?
+#dpkg --get-selections | awk '$2 ~ /^(install|hold)/ { print $1 }' | sort > ${foundpkgs} 
+# comm -23 ${foundpkgs} ${oninstall} > ${afterthought}
+
+# a verbose switch to display the after thoughts  file
+
+lines=$( wc -l ${afterthought} | awk '{ print $1 }')
+echo There are $lines  lines in the "afterthoughts" file
+
+if [ $verbose == true ];then
+	cat ${afterthought}
+else
+	echo The afterthoughts file is called ${afterthought}
+fi
