@@ -15,6 +15,5 @@ diff=int(age/secsday)
 
 #if diff = 1 DAYS = day
 DAYS="days"
-print ("The file is", diff, DAYS, "old")
-#print "The file is %s %s old" % (diff, DAYS)
+print "The file is %s %s old" % (diff, DAYS)
 # therfore age/sescsday should give the age since the file was last modified.
