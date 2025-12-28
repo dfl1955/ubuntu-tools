@@ -1,0 +1,7 @@
+#!/bin/bash
+
+for i in /opt/local/var/apt/*log
+do
+	echo $(basename $i)
+	fileage.py $i
+done
