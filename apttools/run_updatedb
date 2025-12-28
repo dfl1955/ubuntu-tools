@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# this program needs time and update db
+
+# Version 2 - logs and logrotate added 27/12/2025
+version="2.0"
+# amended 15/4/2019, final if test amended
+
+# this needs the log directory to be created for non reboot instances
+# note that run_apt has an install module and checks that the programs
+# are installed
+
+if [ `whoami` != "root" ]
+then
+	echo neds to run as root
+	exit 1
+fi
+
+USAGE="$0 $version
+This program runs updatedb with a log wrapper.
+    -i	fake install leg
+	-c  checks for file locations, but not programs
+	-h  help message"
+
+# help, quiet, check, verbose, 
+
+LOGDIR=/opt/local/var/apt
+LOGFILE=updatedb.log
+LOGCONF=updatedb.conf
+
+check_dependencies () {
+	if [ -d ${LOGDIR} ];then
+		ls ${LOGDIR}
+	else
+		echo ${LOGDIR} does not exist
+	fi
+}
+
+while getopts ich opt
+do
+case $opt in
+-i)		: # install leg
+		check_dependencies
+		exit
+		;;
+-c)		: # check installation leg
+		check_dependencies
+		exit
+		;;
+-h)		echo $USAGE
+		exit
+		;;
+esac
+done
+
+conffile=${LOGDIR}/${LOGCONF}
+logfile=${LOGDIR}/${LOGFILE}
+
+/usr/sbin/logrotate  ${conffile}
+
+{ echo `date +%c` updatedb starts
+time updatedb
+echo `date +%c` updatedb ends 
+} | tee -a ${logfile} 
+
+
+# this needs the log directory to be created for non reboot instances
+# this is not redundant, but maybe should be just left with out the test. 
+if [[ $1 -eq "--with-logger" ]]
+then
+	logger "updatedb run by cron"
+fi

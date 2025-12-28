@@ -1,0 +1,154 @@
+#!/bin/bash
+#
+# Version 2.1    Nov 22
+version=2.1.2
+#
+# runs apt-get update/upgrade in batch wrapped in a log rotate
+
+# amended to run update only as default
+
+# check could/should be amended to report when the logs were last 
+# touched
+
+# there is a bug in createing the logrotate.conf files, the tail
+# is appended twice
+
+# this will need to run as superuser
+
+USAGE="$0 ${version} \
+
+	-i	creates the defualt working directories\
+	-c	checks the logdir
+	-d	thedpkg command if the last apt failed
+	-h	prints this message
+	-u	runs upgrade, default it update only
+	-x	destroys the logdir and its contents
+
+	"
+
+if [ $(whoami) != 'root' ];then
+	echo $0 needs superuser privilege
+	exit 1
+fi 
+
+verbose=1  # is this now redundant
+runmode="update"
+# move line below to the case statement maybe delete
+
+LOGDIR=/opt/local/var/apt  # this might be parameterised, but I am happy with this
+
+
+while getopts icdhux opt
+do
+	case $1 in
+	-i|--install|install)	  :
+		echo install routine
+		#
+		# are the necessary programs installed
+		#
+		for program in locate logrotate
+		do
+			echo looking for $program
+			if [ $( which ${program} | wc -l ) -eq 0 ];then
+				echo ${program} is not installed, please install it
+				exit 2
+			else
+				echo $program found
+			fi
+		done
+		echo running updatedb, this may take some time ...
+		updatedb
+		#
+		# make the lograte conf files and the working directory
+		#
+		model=apt_logrconf.model
+		#
+		# this won't work unless an updatedb has been run after the model has 
+		# been installed
+		#
+		logconfmodel=$(locate ${model})
+		# this beeds a if exists test on log conf model
+		cat $logconfmodel
+		if [ ! -d ${LOGDIR} ];then
+			mkdir -p ${LOGDIR}
+			# needs the logrotate conf files
+			#
+			# there is a bug here, it creates a strange log conf file
+			# with duplicate lines. 
+			for mode in update upgrade
+			do
+				echo making $mode logrotate conf file
+				logfile="${LOGDIR}/apt-${mode}.conf"
+				# the echo line below is the bug, it don't ike the escaped cirly bracket
+				echo ${logfile%.conf}.log \{ > ${logfile}
+				cat  ${logconfmodel} >> ${logfile}
+				cat ${logfile}
+			done 
+		fi
+		echo the program $0 needs to be moved to a root path directory
+		exit
+		;;
+	-u|-upgrade|upgrade)	:
+		runmode=${runmode}" upgrade"
+		echo run mode is ${runmode}
+		;;
+	-c|--check|check) :
+		if [ -d ${LOGDIR} ];then
+			ls ${LOGDIR}
+		else
+			echo ${LOGDIR} does not exist
+		fi
+		exit
+		;;
+	-d|dpkgc)	:
+		echo dpkg --configure -a
+		dpkg --configure -a
+		exit
+		;;
+	-h)	:
+		echo ${USAGE}
+		exit
+		;;
+	-x|--uninstall|uninstall) :
+		echo -n uninstall
+		if [  -d ${LOGDIR} ];then
+			rm -rf ${LOGDIR}
+		fi
+		echo " " ... done
+		exit
+		;;
+	*)	echo ${USAGE}; exit
+		;;
+	esac
+done
+
+displayEcode()
+{
+	# dmesg errorcode program
+	ecode=$1; shift
+	if [ $ecode != 0 ];then
+		echo $* Error Code $ecode
+		exit 1
+	fi
+}
+
+# echo calling apt 
+
+#
+# main process
+#
+for mode in $runmode
+do
+	confile="${LOGDIR}/apt-${mode}.conf"
+	logfile="${confile%.conf}.log"
+	# echo $mode $confile $logfile
+	# check this path for programs other than Raspbian
+	/usr/sbin/logrotate  ${confile}
+	DEBIAN_FRONTEND=noninteractive apt-get -y $mode | tee ${logfile}
+	echo $(date) $0 in ${mode} ends >> $logfile
+	# ls ${LOGDIR}
+	displayEcode $? apt-get may have failed
+done
+#
+# perhaps an update db
+#
