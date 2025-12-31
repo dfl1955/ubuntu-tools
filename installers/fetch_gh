@@ -1,13 +1,31 @@
 #!/bin/bash
 
+# V1.2 - I have written better code than this, most of it though is lifted from elsewhere but
+#        I should use getopts, test for the existence of $1
+
 # inserted 1 March 2024, copied from somewhere
 
-type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+# if amaipi = true use the -p leg
 
-curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
-    sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
- && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
- && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-	| sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
- && sudo apt update \
- && sudo apt install gh -y
+case $1 in
+-i)     : # old code March 2024
+        type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+		curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
+    		sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+ 		&& sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+ 		&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+			| sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+ 		&& sudo apt update \
+ 		&& sudo apt install gh -y
+        exit
+        ;;
+-p)     : # if PI/ARM
+        GITHUB_CLI_VERSION=$(curl -s "https://api.github.com/repos/cli/cli/releases/latest" | grep -Po '"tag_name": "v\K[0-9.]+')
+        curl -Lo gh.deb "https://github.com/cli/cli/releases/latest/download/gh_${GITHUB_CLI_VERSION}_linux_armv6.deb"
+        sudo dpkg -i gh.deb
+        exit
+        ;;
+*)      echo $0 -i|-p
+        exit
+        ;;
+esac
